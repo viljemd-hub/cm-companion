@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="false"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.CmCompanion">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!--
+                Universal docking deep link. A CM installation's admin panel
+                renders this as a QR code / "Add to Companion" link when the
+                owner generates a pairing code. The app never assumes a
+                fixed CM domain - url is always part of the payload.
+                Scheme is intentionally app-specific (not https App Links)
+                so any self-hosted CM install can point at it without
+                Digital Asset Links / domain verification.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="cmcompanion" android:host="pair" />
+            </intent-filter>
+        </activity>
+
+    </application>
+</manifest>
