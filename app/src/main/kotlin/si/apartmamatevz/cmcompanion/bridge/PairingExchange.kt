@@ -10,18 +10,17 @@ import java.util.concurrent.TimeUnit
 /**
  * Exchanges a one-time pairing code for a permanent per-device token.
  *
- * SERVER SIDE DOES NOT EXIST YET. CM_Mobile_Companion_Plan_v0.1.md §4/§9
- * names this as open work: a device-pairing endpoint on the CM PRO side,
- * following the CM Connector installation_id + one-time-code pattern, is
- * a prerequisite for this call to succeed against a real installation.
- * This class exists so the client-side contract is fixed now (request/
- * response shape below), not guessed differently later once the server
- * endpoint lands.
+ * Server side lives in cm_bridge_pairing.php / admin/api/bridge/v1/pairing/
+ * exchange.php on the CM PRO side (pro-dev-repo), following the CM
+ * Connector installation_id + one-time-code pattern.
  *
- * Expected server endpoint (planned path, not yet built):
- *   POST {bridgeBaseUrl}/pairing/exchange
+ * Server endpoint:
+ *   POST {bridgeBaseUrl}/pairing/exchange.php
  *   body: {"installation_id": ..., "code": ..., "device_label": ...}
  *   response: {"ok": true, "device_token": ..., "scopes": [...]}
+ *
+ * Note the literal .php - there is no URL-rewrite/routing layer on the
+ * server, every Bridge endpoint is a real file Apache serves directly.
  */
 class PairingExchange {
 
@@ -37,7 +36,7 @@ class PairingExchange {
             put("device_label", deviceLabel)
         }
         val httpRequest = Request.Builder()
-            .url("${request.bridgeBaseUrl.trimEnd('/')}/pairing/exchange")
+            .url("${request.bridgeBaseUrl.trimEnd('/')}/pairing/exchange.php")
             .post(body.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
             .build()
 

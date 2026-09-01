@@ -29,7 +29,11 @@ class BridgeClient(private val connection: InstallationConnection) {
         .readTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    /** GET against a Bridge v1 endpoint, e.g. "dashboard/today". */
+    /**
+     * GET against a Bridge v1 endpoint, e.g. "dashboard/today.php". Include
+     * the literal .php - there is no URL-rewrite layer on the server, see
+     * PairingExchange.kt for the same gotcha that broke pairing once.
+     */
     fun get(path: String): JSONObject {
         val request = Request.Builder()
             .url("${connection.baseUrl.trimEnd('/')}/$path")
@@ -39,7 +43,7 @@ class BridgeClient(private val connection: InstallationConnection) {
         return execute(request)
     }
 
-    /** POST a JSON body against a Bridge v1 endpoint, e.g. "action/inquiry_respond". */
+    /** POST a JSON body against a Bridge v1 endpoint, e.g. "action/inquiry_respond.php". */
     fun post(path: String, body: JSONObject): JSONObject {
         val request = Request.Builder()
             .url("${connection.baseUrl.trimEnd('/')}/$path")
