@@ -36,8 +36,8 @@ enum class CompanionTab { TODAY, ALERTS, INQUIRIES, CONNECTION }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CompanionShell(viewModel: DockViewModel) {
-    val connections = remember { viewModel.connections() }
-    var selected by remember { mutableStateOf(connections.firstOrNull()) }
+    val connections = viewModel.connections
+    var selected by remember(connections) { mutableStateOf(connections.firstOrNull()) }
     var tab by remember { mutableStateOf(CompanionTab.TODAY) }
 
     if (selected == null) {
