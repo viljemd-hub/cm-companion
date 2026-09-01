@@ -1,8 +1,10 @@
 package si.apartmamatevz.cmcompanion.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -31,6 +33,7 @@ import si.apartmamatevz.cmcompanion.ui.dock.DockViewModel
  */
 enum class CompanionTab { TODAY, ALERTS, INQUIRIES, CONNECTION }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CompanionShell(viewModel: DockViewModel) {
     val connections = remember { viewModel.connections() }
