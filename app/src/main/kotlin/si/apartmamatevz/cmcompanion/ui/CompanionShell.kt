@@ -17,10 +17,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
+import si.apartmamatevz.cmcompanion.data.SeenInquiriesStore
 import si.apartmamatevz.cmcompanion.ui.dock.DockScreen
 import si.apartmamatevz.cmcompanion.ui.dock.DockViewModel
+import si.apartmamatevz.cmcompanion.ui.inquiries.InquiriesScreen
+import si.apartmamatevz.cmcompanion.ui.inquiries.InquiriesViewModel
 import si.apartmamatevz.cmcompanion.ui.today.TodayScreen
 import si.apartmamatevz.cmcompanion.ui.today.TodayViewModel
 
@@ -70,10 +75,34 @@ fun CompanionShell(dockViewModel: DockViewModel) {
             }
         },
     ) { padding ->
+        val context = LocalContext.current
+        val seenStoreFactory = remember {
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                    val seenStore = SeenInquiriesStore(context.applicationContext)
+                    return when (modelClass) {
+                        TodayViewModel::class.java -> TodayViewModel(seenStore) as T
+                        InquiriesViewModel::class.java -> InquiriesViewModel(seenStore) as T
+                        else -> throw IllegalArgumentException("Unknown ViewModel: $modelClass")
+                    }
+                }
+            }
+        }
+
         Column(modifier = Modifier.padding(padding)) {
             when (tab) {
-                CompanionTab.TODAY -> TodayScreen(selected!!, viewModel())
-                // Alerts/Inquiries/Connection are the next increment (see
+                CompanionTab.TODAY -> TodayScreen(
+                    connection = selected!!,
+                    viewModel = viewModel(factory = seenStoreFactory),
+                    onInquiryClick = { tab = CompanionTab.INQUIRIES },
+                )
+                CompanionTab.INQUIRIES -> InquiriesScreen(
+                    connection = selected!!,
+                    viewModel = viewModel(factory = seenStoreFactory),
+                    onDone = { tab = CompanionTab.TODAY },
+                )
+                // Alerts/Connection are the next increment (see
                 // pro_dev_roadmap memory, 2026-09-03 TODAY design review) -
                 // deliberately not bundled into this pass.
                 else -> Text("TODO: ${tab.name} screen for ${selected?.displayName}")

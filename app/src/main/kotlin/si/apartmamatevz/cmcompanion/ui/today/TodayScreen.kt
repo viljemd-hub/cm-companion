@@ -1,5 +1,6 @@
 package si.apartmamatevz.cmcompanion.ui.today
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,7 +29,7 @@ import si.apartmamatevz.cmcompanion.data.InstallationConnection
  * not a full admin dashboard.
  */
 @Composable
-fun TodayScreen(connection: InstallationConnection, viewModel: TodayViewModel) {
+fun TodayScreen(connection: InstallationConnection, viewModel: TodayViewModel, onInquiryClick: () -> Unit) {
     LaunchedEffect(connection.id) { viewModel.load(connection) }
 
     Column(
@@ -40,18 +41,18 @@ fun TodayScreen(connection: InstallationConnection, viewModel: TodayViewModel) {
         when {
             viewModel.isLoading && viewModel.dashboard == null -> CircularProgressIndicator()
             viewModel.errorMessage != null -> Text("Could not load today: ${viewModel.errorMessage}")
-            viewModel.dashboard != null -> TodayContent(viewModel.dashboard!!, viewModel.attention)
+            viewModel.dashboard != null -> TodayContent(viewModel.dashboard!!, viewModel.attention, onInquiryClick)
         }
     }
 }
 
 @Composable
-private fun TodayContent(dashboard: TodayDashboard, attention: List<AttentionItem>) {
+private fun TodayContent(dashboard: TodayDashboard, attention: List<AttentionItem>, onInquiryClick: () -> Unit) {
     val hostingStays = dashboard.units.mapNotNull { it.currentlyHosting?.let { s -> it.unit to s } }
     val arrivalStays = dashboard.units.flatMap { u -> u.arrivals.map { u.unit to it } }
     val departureStays = dashboard.units.flatMap { u -> u.departures.map { u.unit to it } }
 
-    AttentionSection(attention)
+    AttentionSection(attention, onInquiryClick)
 
     Section(
         title = "Currently hosting",
@@ -88,7 +89,7 @@ private fun TodayContent(dashboard: TodayDashboard, attention: List<AttentionIte
 }
 
 @Composable
-private fun AttentionSection(items: List<AttentionItem>) {
+private fun AttentionSection(items: List<AttentionItem>, onInquiryClick: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             if (items.isEmpty()) "All clear" else "${items.size} item(s) need attention",
@@ -96,7 +97,12 @@ private fun AttentionSection(items: List<AttentionItem>) {
         )
         items.forEach { item ->
             val marker = if (item.kind == AttentionKind.INQUIRY) "●" else "○"
-            Text("$marker ${item.title} — ${item.unit} — ${item.detail}")
+            val rowModifier = if (item.kind == AttentionKind.INQUIRY) {
+                Modifier.clickable(onClick = onInquiryClick)
+            } else {
+                Modifier
+            }
+            Text("$marker ${item.title} — ${item.unit} — ${item.detail}", modifier = rowModifier)
         }
     }
 }

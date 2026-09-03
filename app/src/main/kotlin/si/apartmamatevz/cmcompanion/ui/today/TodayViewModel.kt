@@ -16,8 +16,9 @@ import si.apartmamatevz.cmcompanion.bridge.parseAlertAttentionItems
 import si.apartmamatevz.cmcompanion.bridge.parseInquiryAttentionItems
 import si.apartmamatevz.cmcompanion.bridge.parseTodayDashboard
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
+import si.apartmamatevz.cmcompanion.data.SeenInquiriesStore
 
-class TodayViewModel : ViewModel() {
+class TodayViewModel(private val seenStore: SeenInquiriesStore) : ViewModel() {
 
     var isLoading by mutableStateOf(false)
         private set
@@ -49,7 +50,13 @@ class TodayViewModel : ViewModel() {
                     withContext(Dispatchers.IO) { client.get("dashboard/alerts.php") }
                 }.map(::parseAlertAttentionItems).getOrDefault(emptyList())
 
-                attention = mergeAttentionItems(inquiryItems, alertItems)
+                // Local-only "seen" filter (2026-09-03 decision): once a host
+                // has opened an inquiry on this device, it drops off Attention
+                // here, even though the underlying pending inquiry is still
+                // fully present server-side (and in the admin panel).
+                val unseenInquiries = inquiryItems.filterNot { seenStore.isSeen(it.id) }
+
+                attention = mergeAttentionItems(unseenInquiries, alertItems)
             } catch (e: Exception) {
                 errorMessage = e.message ?: e.javaClass.simpleName
             } finally {

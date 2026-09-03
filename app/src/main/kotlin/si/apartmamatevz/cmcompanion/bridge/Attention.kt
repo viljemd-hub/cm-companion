@@ -16,6 +16,7 @@ import org.json.JSONObject
  */
 data class AttentionItem(
     val kind: AttentionKind,
+    val id: String,
     val title: String,
     val detail: String,
     val unit: String,
@@ -33,6 +34,7 @@ fun parseInquiryAttentionItems(json: JSONObject): List<AttentionItem> {
         val nights = inq.getInt("nights")
         AttentionItem(
             kind = AttentionKind.INQUIRY,
+            id = inq.getString("id"),
             title = "New inquiry",
             detail = "$from → $to ($nights nights)",
             unit = inq.getString("unit"),
@@ -47,6 +49,7 @@ fun parseAlertAttentionItems(json: JSONObject): List<AttentionItem> {
         val alert = alerts.getJSONObject(i)
         AttentionItem(
             kind = AttentionKind.ALERT,
+            id = alert.optString("id"),
             title = alert.optString("title").ifBlank { alert.optString("type") },
             detail = alert.optString("message"),
             unit = alert.optString("unit"),
