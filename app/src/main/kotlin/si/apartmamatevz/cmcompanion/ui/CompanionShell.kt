@@ -17,9 +17,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
 import si.apartmamatevz.cmcompanion.ui.dock.DockScreen
 import si.apartmamatevz.cmcompanion.ui.dock.DockViewModel
+import si.apartmamatevz.cmcompanion.ui.today.TodayScreen
+import si.apartmamatevz.cmcompanion.ui.today.TodayViewModel
 
 /**
  * Top-level shell: an installation switcher in the app bar, four tabs
@@ -35,16 +38,19 @@ enum class CompanionTab { TODAY, ALERTS, INQUIRIES, CONNECTION }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CompanionShell(viewModel: DockViewModel) {
-    val connections = viewModel.connections
+fun CompanionShell(dockViewModel: DockViewModel) {
+    // Named dockViewModel, not viewModel - the latter would shadow the
+    // imported androidx.lifecycle.viewmodel.compose.viewModel() Composable
+    // called below for per-tab view models (TodayScreen).
+    val connections = dockViewModel.connections
     var selected by remember(connections) { mutableStateOf(connections.firstOrNull()) }
     var tab by remember { mutableStateOf(CompanionTab.TODAY) }
 
     if (selected == null) {
         DockScreen(
-            isPairing = viewModel.isPairing,
-            errorMessage = viewModel.errorMessage,
-            onPair = { request, name -> viewModel.pair(request, name, deviceLabel = "Android") },
+            isPairing = dockViewModel.isPairing,
+            errorMessage = dockViewModel.errorMessage,
+            onPair = { request, name -> dockViewModel.pair(request, name, deviceLabel = "Android") },
         )
         return
     }
@@ -65,13 +71,13 @@ fun CompanionShell(viewModel: DockViewModel) {
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
-            // Screen bodies (Today/Alerts/Inquiries/Connection) call BridgeClient
-            // against `selected`, scoped to dashboard.today / dashboard.alerts /
-            // dashboard.inquiries / the connection-status read model. Not wired
-            // up yet - those Bridge scopes don't exist server-side yet either
-            // (see CM_Mobile_Companion_Plan_v0.1.md §5). This shell is the
-            // structural placeholder they land in.
-            Text("TODO: ${tab.name} screen for ${selected?.displayName}")
+            when (tab) {
+                CompanionTab.TODAY -> TodayScreen(selected!!, viewModel())
+                // Alerts/Inquiries/Connection are the next increment (see
+                // pro_dev_roadmap memory, 2026-09-03 TODAY design review) -
+                // deliberately not bundled into this pass.
+                else -> Text("TODO: ${tab.name} screen for ${selected?.displayName}")
+            }
         }
     }
 }
