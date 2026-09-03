@@ -90,17 +90,34 @@ fun CompanionShell(dockViewModel: DockViewModel) {
             }
         }
 
+        // Hoisted (not created inline per-branch) so InquiriesScreen's
+        // onDone below can force a Today reload on the SAME instance -
+        // fixes a real 2026-09-03 report where returning to Today after
+        // viewing/accepting an inquiry left the Attention count stale
+        // until an unrelated full reload happened to occur.
+        val todayViewModel: TodayViewModel = viewModel(factory = seenStoreFactory)
+        val inquiriesViewModel: InquiriesViewModel = viewModel(factory = seenStoreFactory)
+        var pendingInquiryId by remember { mutableStateOf<String?>(null) }
+
         Column(modifier = Modifier.padding(padding)) {
             when (tab) {
                 CompanionTab.TODAY -> TodayScreen(
                     connection = selected!!,
-                    viewModel = viewModel(factory = seenStoreFactory),
-                    onInquiryClick = { tab = CompanionTab.INQUIRIES },
+                    viewModel = todayViewModel,
+                    onInquiryClick = { inquiryId ->
+                        pendingInquiryId = inquiryId
+                        tab = CompanionTab.INQUIRIES
+                    },
                 )
                 CompanionTab.INQUIRIES -> InquiriesScreen(
                     connection = selected!!,
-                    viewModel = viewModel(factory = seenStoreFactory),
-                    onDone = { tab = CompanionTab.TODAY },
+                    viewModel = inquiriesViewModel,
+                    initialExpandedId = pendingInquiryId,
+                    onDone = {
+                        pendingInquiryId = null
+                        tab = CompanionTab.TODAY
+                        todayViewModel.load(selected!!)
+                    },
                 )
                 // Alerts/Connection are the next increment (see
                 // pro_dev_roadmap memory, 2026-09-03 TODAY design review) -

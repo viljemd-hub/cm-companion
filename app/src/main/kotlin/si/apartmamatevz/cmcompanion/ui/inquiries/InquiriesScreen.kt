@@ -29,9 +29,22 @@ import si.apartmamatevz.cmcompanion.data.InstallationConnection
 fun InquiriesScreen(
     connection: InstallationConnection,
     viewModel: InquiriesViewModel,
+    initialExpandedId: String? = null,
     onDone: () -> Unit,
 ) {
     LaunchedEffect(connection.id) { viewModel.load(connection) }
+
+    // Arriving here from an Attention tap should land already expanded on
+    // the inquiry the host tapped - fixes a real 2026-09-03 report ("klik
+    // peljal na inquiries" but didn't expand it). Guarded so a later
+    // recomposition (e.g. after Accept removes a row) doesn't re-expand.
+    LaunchedEffect(viewModel.inquiries, initialExpandedId) {
+        if (initialExpandedId != null && viewModel.expandedId == null &&
+            viewModel.inquiries.any { it.id == initialExpandedId }
+        ) {
+            viewModel.toggleExpanded(initialExpandedId)
+        }
+    }
 
     Column(
         modifier = Modifier

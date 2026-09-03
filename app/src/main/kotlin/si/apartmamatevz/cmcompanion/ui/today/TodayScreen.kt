@@ -29,7 +29,7 @@ import si.apartmamatevz.cmcompanion.data.InstallationConnection
  * not a full admin dashboard.
  */
 @Composable
-fun TodayScreen(connection: InstallationConnection, viewModel: TodayViewModel, onInquiryClick: () -> Unit) {
+fun TodayScreen(connection: InstallationConnection, viewModel: TodayViewModel, onInquiryClick: (String) -> Unit) {
     LaunchedEffect(connection.id) { viewModel.load(connection) }
 
     Column(
@@ -47,7 +47,7 @@ fun TodayScreen(connection: InstallationConnection, viewModel: TodayViewModel, o
 }
 
 @Composable
-private fun TodayContent(dashboard: TodayDashboard, attention: List<AttentionItem>, onInquiryClick: () -> Unit) {
+private fun TodayContent(dashboard: TodayDashboard, attention: List<AttentionItem>, onInquiryClick: (String) -> Unit) {
     val hostingStays = dashboard.units.mapNotNull { it.currentlyHosting?.let { s -> it.unit to s } }
     val arrivalStays = dashboard.units.flatMap { u -> u.arrivals.map { u.unit to it } }
     val departureStays = dashboard.units.flatMap { u -> u.departures.map { u.unit to it } }
@@ -89,7 +89,7 @@ private fun TodayContent(dashboard: TodayDashboard, attention: List<AttentionIte
 }
 
 @Composable
-private fun AttentionSection(items: List<AttentionItem>, onInquiryClick: () -> Unit) {
+private fun AttentionSection(items: List<AttentionItem>, onInquiryClick: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             if (items.isEmpty()) "All clear" else "${items.size} item(s) need attention",
@@ -98,7 +98,7 @@ private fun AttentionSection(items: List<AttentionItem>, onInquiryClick: () -> U
         items.forEach { item ->
             val marker = if (item.kind == AttentionKind.INQUIRY) "●" else "○"
             val rowModifier = if (item.kind == AttentionKind.INQUIRY) {
-                Modifier.clickable(onClick = onInquiryClick)
+                Modifier.clickable { onInquiryClick(item.id) }
             } else {
                 Modifier
             }
