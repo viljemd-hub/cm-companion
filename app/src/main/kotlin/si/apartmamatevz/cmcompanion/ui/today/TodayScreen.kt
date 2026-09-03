@@ -12,6 +12,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import si.apartmamatevz.cmcompanion.bridge.AttentionItem
+import si.apartmamatevz.cmcompanion.bridge.AttentionKind
 import si.apartmamatevz.cmcompanion.bridge.TodayDashboard
 import si.apartmamatevz.cmcompanion.bridge.TodayStay
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
@@ -21,8 +23,9 @@ import si.apartmamatevz.cmcompanion.data.InstallationConnection
  * the 2026-09-03 design review recorded in pro_dev_roadmap memory:
  * "Currently hosting" ranks high (host thinks "who's here", not
  * "what does my occupancy model say"), guest counts are shown as an
- * aggregate headcount, never a name. Attention/alerts and inquiries are a
- * deliberately separate next increment, not bundled into this one.
+ * aggregate headcount, never a name. Attention sits at the very top -
+ * "in 5 seconds, is everything OK and what needs me" is the screen's job,
+ * not a full admin dashboard.
  */
 @Composable
 fun TodayScreen(connection: InstallationConnection, viewModel: TodayViewModel) {
@@ -37,16 +40,18 @@ fun TodayScreen(connection: InstallationConnection, viewModel: TodayViewModel) {
         when {
             viewModel.isLoading && viewModel.dashboard == null -> CircularProgressIndicator()
             viewModel.errorMessage != null -> Text("Could not load today: ${viewModel.errorMessage}")
-            viewModel.dashboard != null -> TodayContent(viewModel.dashboard!!)
+            viewModel.dashboard != null -> TodayContent(viewModel.dashboard!!, viewModel.attention)
         }
     }
 }
 
 @Composable
-private fun TodayContent(dashboard: TodayDashboard) {
+private fun TodayContent(dashboard: TodayDashboard, attention: List<AttentionItem>) {
     val hostingStays = dashboard.units.mapNotNull { it.currentlyHosting?.let { s -> it.unit to s } }
     val arrivalStays = dashboard.units.flatMap { u -> u.arrivals.map { u.unit to it } }
     val departureStays = dashboard.units.flatMap { u -> u.departures.map { u.unit to it } }
+
+    AttentionSection(attention)
 
     Section(
         title = "Currently hosting",
@@ -78,6 +83,20 @@ private fun TodayContent(dashboard: TodayDashboard) {
             Text("No departures today.")
         } else {
             departureStays.forEach { (unit, stay) -> StayRow(unit, stay) }
+        }
+    }
+}
+
+@Composable
+private fun AttentionSection(items: List<AttentionItem>) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            if (items.isEmpty()) "All clear" else "${items.size} item(s) need attention",
+            fontWeight = FontWeight.Bold,
+        )
+        items.forEach { item ->
+            val marker = if (item.kind == AttentionKind.INQUIRY) "●" else "○"
+            Text("$marker ${item.title} — ${item.unit} — ${item.detail}")
         }
     }
 }
