@@ -16,6 +16,15 @@ import androidx.compose.ui.unit.dp
 import si.apartmamatevz.cmcompanion.bridge.PairingRequest
 
 /**
+ * Server generates codes as strtoupper(bin2hex(random_bytes(4))) split
+ * 4-4 with a dash - hex chars only, always uppercase. The exchange
+ * endpoint compares codes with a strict !== (case-sensitive), so a
+ * lowercase paste would silently never match - hence forcing uppercase
+ * here rather than just validating and rejecting it.
+ */
+private val PAIRING_CODE_PATTERN = Regex("^[0-9A-F]{4}-[0-9A-F]{4}$")
+
+/**
  * Manual-entry docking screen: base URL + installation id + one-time code.
  * A future QR scanner screen resolves to the same [PairingRequest] and
  * calls [onPair] with it - see bridge/PairingDeepLink.kt.
@@ -60,10 +69,15 @@ fun DockScreen(
         )
         OutlinedTextField(
             value = code.value,
-            onValueChange = { code.value = it },
+            onValueChange = { code.value = it.uppercase() },
             label = { Text("Pairing code") },
+            placeholder = { Text("XXXX-XXXX") },
+            isError = code.value.isNotBlank() && !PAIRING_CODE_PATTERN.matches(code.value),
             modifier = Modifier.fillMaxWidth(),
         )
+        if (code.value.isNotBlank() && !PAIRING_CODE_PATTERN.matches(code.value)) {
+            Text("Expected format: XXXX-XXXX (e.g. A1B2-C3D4) - make sure you copied the short code, not the deep link.")
+        }
 
         errorMessage?.let { Text(it) }
 
@@ -76,7 +90,8 @@ fun DockScreen(
             // generic 400 either way, which is hard to diagnose from the
             // app alone. Trimmed too, since copy/paste from the admin page
             // can carry a stray leading/trailing space.
-            val canSubmit = baseUrl.value.isNotBlank() && installationId.value.isNotBlank() && code.value.isNotBlank()
+            val canSubmit = baseUrl.value.isNotBlank() && installationId.value.isNotBlank() &&
+                PAIRING_CODE_PATTERN.matches(code.value)
             Button(
                 enabled = canSubmit,
                 onClick = {
