@@ -9,6 +9,10 @@ import android.content.Context
  * device. Not synced across devices or with the admin panel - acceptable
  * for v0.1, a real limitation if the host uses Companion on more than one
  * phone. Plain (unencrypted) prefs, since inquiry IDs aren't sensitive.
+ *
+ * unmarkSeen() exists so the host can deliberately put an inquiry back on
+ * the Attention list (2026-09-03: "če bi rabil dodatno spodbudo") - seen
+ * is a one-way auto-flag on view, but reversible on purpose.
  */
 class SeenInquiriesStore(context: Context) {
 
@@ -20,6 +24,12 @@ class SeenInquiriesStore(context: Context) {
     fun markSeen(inquiryId: String) {
         val current = prefs.getStringSet(KEY_SEEN, emptySet())?.toMutableSet() ?: mutableSetOf()
         current.add(inquiryId)
+        prefs.edit().putStringSet(KEY_SEEN, current).apply()
+    }
+
+    fun unmarkSeen(inquiryId: String) {
+        val current = prefs.getStringSet(KEY_SEEN, emptySet())?.toMutableSet() ?: mutableSetOf()
+        current.remove(inquiryId)
         prefs.edit().putStringSet(KEY_SEEN, current).apply()
     }
 

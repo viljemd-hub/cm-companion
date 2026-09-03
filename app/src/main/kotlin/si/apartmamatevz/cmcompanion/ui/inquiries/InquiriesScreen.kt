@@ -61,9 +61,11 @@ fun InquiriesScreen(
                     inquiry = inquiry,
                     expanded = viewModel.expandedId == inquiry.id,
                     accepting = viewModel.acceptingId == inquiry.id,
+                    seen = viewModel.isSeen(inquiry.id),
                     onToggle = { viewModel.toggleExpanded(inquiry.id) },
                     onAccept = { viewModel.accept(connection, inquiry.id, onDone) },
                     onBack = onDone,
+                    onUnmarkSeen = { viewModel.unmarkSeen(inquiry.id) },
                 )
             }
         }
@@ -75,9 +77,11 @@ private fun InquiryRow(
     inquiry: Inquiry,
     expanded: Boolean,
     accepting: Boolean,
+    seen: Boolean,
     onToggle: () -> Unit,
     onAccept: () -> Unit,
     onBack: () -> Unit,
+    onUnmarkSeen: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -85,8 +89,12 @@ private fun InquiryRow(
             .clickable(onClick = onToggle),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
+        // Visible flag state (2026-09-03: "kaj pa če bi bile zastavice
+        // vidne?") - a seen inquiry shows a marker even collapsed, so the
+        // host can spot at a glance what still needs a fresh look.
+        val marker = if (seen) "✓ " else "🚩 "
         Text(
-            "${inquiry.unit} — ${inquiry.from} → ${inquiry.to} (${inquiry.nights} nights)",
+            "$marker${inquiry.unit} — ${inquiry.from} → ${inquiry.to} (${inquiry.nights} nights)",
             fontWeight = FontWeight.Bold,
         )
 
@@ -108,6 +116,14 @@ private fun InquiryRow(
                     }
                     OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                         Text("Back")
+                    }
+                    // Only useful once seen (that's what put it in this
+                    // "handled" state to begin with) - manual escape hatch
+                    // back onto Today's Attention list, not automatic.
+                    if (seen) {
+                        OutlinedButton(onClick = onUnmarkSeen, modifier = Modifier.fillMaxWidth()) {
+                            Text("Remind me again (show in Attention)")
+                        }
                     }
                 }
             }

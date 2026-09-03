@@ -28,6 +28,13 @@ class InquiriesViewModel(private val seenStore: SeenInquiriesStore) : ViewModel(
     var acceptingId by mutableStateOf<String?>(null)
         private set
 
+    // Mirrors SeenInquiriesStore as observable state - direct store reads
+    // wouldn't trigger recomposition when toggled.
+    var seenIds by mutableStateOf<Set<String>>(emptySet())
+        private set
+
+    fun isSeen(inquiryId: String): Boolean = inquiryId in seenIds
+
     fun load(connection: InstallationConnection) {
         isLoading = true
         errorMessage = null
@@ -37,6 +44,7 @@ class InquiriesViewModel(private val seenStore: SeenInquiriesStore) : ViewModel(
                     BridgeClient(connection).get("dashboard/inquiries.php")
                 }
                 inquiries = parseInquiries(json)
+                seenIds = inquiries.map { it.id }.filter(seenStore::isSeen).toSet()
             } catch (e: Exception) {
                 errorMessage = e.message ?: e.javaClass.simpleName
             } finally {
@@ -53,6 +61,18 @@ class InquiriesViewModel(private val seenStore: SeenInquiriesStore) : ViewModel(
     fun toggleExpanded(inquiryId: String) {
         expandedId = if (expandedId == inquiryId) null else inquiryId
         seenStore.markSeen(inquiryId)
+        seenIds = seenIds + inquiryId
+    }
+
+    /**
+     * Manual override (2026-09-03: "če bi rabil dodatno spodbudo") - puts
+     * an already-viewed inquiry back on Today's Attention list. Seen is
+     * otherwise a one-way auto-flag on view; this is the deliberate escape
+     * hatch, not something that happens automatically.
+     */
+    fun unmarkSeen(inquiryId: String) {
+        seenStore.unmarkSeen(inquiryId)
+        seenIds = seenIds - inquiryId
     }
 
     /**
