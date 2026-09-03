@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import si.apartmamatevz.cmcompanion.bridge.BridgeException
 import si.apartmamatevz.cmcompanion.bridge.PairingExchange
 import si.apartmamatevz.cmcompanion.bridge.PairingRequest
 import si.apartmamatevz.cmcompanion.data.ConnectionStatus
@@ -55,11 +57,28 @@ class DockViewModel(private val store: ConnectionStore) : ViewModel() {
                 )
                 connections = store.list()
             } catch (e: Exception) {
-                errorMessage = e.message ?: e.javaClass.simpleName
+                errorMessage = describeError(e)
             } finally {
                 isPairing = false
             }
         }
+    }
+
+    /**
+     * BridgeException.message is just "Bridge request failed: HTTP 400" -
+     * the actually useful part (invalid_code / code_expired / missing_code
+     * / ...) is the server's JSON error field, carried in .body but never
+     * surfaced before. A real debugging session (2026-09-02/03) burned a
+     * lot of time because the app only ever showed the HTTP status, never
+     * the reason - this reads the JSON body when present so the error text
+     * on screen means something without needing the server access log.
+     */
+    private fun describeError(e: Exception): String {
+        if (e is BridgeException) {
+            val reason = runCatching { JSONObject(e.body).optString("error") }.getOrNull()
+            if (!reason.isNullOrBlank()) return "$reason (HTTP ${e.httpStatus})"
+        }
+        return e.message ?: e.javaClass.simpleName
     }
 
     fun forget(connectionId: String) {

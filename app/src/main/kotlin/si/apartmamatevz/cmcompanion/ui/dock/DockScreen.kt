@@ -70,15 +70,23 @@ fun DockScreen(
         if (isPairing) {
             CircularProgressIndicator()
         } else {
+            // Disabled instead of letting an empty field reach the server -
+            // a real debugging session found that submitting with a blank
+            // Installation ID or Pairing code produces the exact same
+            // generic 400 either way, which is hard to diagnose from the
+            // app alone. Trimmed too, since copy/paste from the admin page
+            // can carry a stray leading/trailing space.
+            val canSubmit = baseUrl.value.isNotBlank() && installationId.value.isNotBlank() && code.value.isNotBlank()
             Button(
+                enabled = canSubmit,
                 onClick = {
                     onPair(
                         PairingRequest(
-                            bridgeBaseUrl = baseUrl.value,
-                            installationId = installationId.value,
-                            oneTimeCode = code.value,
+                            bridgeBaseUrl = baseUrl.value.trim(),
+                            installationId = installationId.value.trim(),
+                            oneTimeCode = code.value.trim(),
                         ),
-                        displayName.value,
+                        displayName.value.trim(),
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
