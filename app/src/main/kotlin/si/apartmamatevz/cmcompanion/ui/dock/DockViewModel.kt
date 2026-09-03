@@ -81,6 +81,35 @@ class DockViewModel(private val store: ConnectionStore) : ViewModel() {
         return e.message ?: e.javaClass.simpleName
     }
 
+    /**
+     * "Test connection" (2026-09-03) - a debug-build-only shortcut backed
+     * by app/dev.secrets.properties (git-ignored, see build.gradle.kts).
+     * Not a bypass of pairing itself: the token used here still came from
+     * a real one-time-code exchange when the file was set up, it's just
+     * baked into this build instead of re-typed every time. Built so the
+     * user could share a debug APK with family/testers without walking
+     * them through admin-panel pairing for a quick trial. No-op if the
+     * secrets file wasn't present at build time (all BuildConfig fields
+     * blank).
+     */
+    fun useTestConnection(bridgeUrl: String, installationId: String, deviceToken: String, deviceLabel: String) {
+        if (bridgeUrl.isBlank() || installationId.isBlank() || deviceToken.isBlank()) return
+        store.upsert(
+            InstallationConnection(
+                id = UUID.randomUUID().toString(),
+                installationId = installationId,
+                baseUrl = bridgeUrl,
+                deviceToken = deviceToken,
+                displayName = deviceLabel.ifBlank { "Test connection" },
+                createdAt = System.currentTimeMillis(),
+                lastConnectedAt = System.currentTimeMillis(),
+                status = ConnectionStatus.ACTIVE,
+                scopes = listOf("dashboard.today", "dashboard.alerts", "dashboard.inquiries", "action.inquiry_respond"),
+            ),
+        )
+        connections = store.list()
+    }
+
     fun forget(connectionId: String) {
         // TODO once a real "Connected devices" revoke endpoint exists server-side
         // (see bridge/PairingExchange.kt): call it here before removing locally,

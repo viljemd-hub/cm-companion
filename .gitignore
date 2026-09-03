@@ -13,3 +13,7 @@ local.properties
 *.apk
 *.aab
 gradle/wrapper/gradle-wrapper.jar
+
+# Local-only debug "Test connection" credentials - see
+# app/dev.secrets.properties.example. Never commit the real file.
+/app/dev.secrets.properties

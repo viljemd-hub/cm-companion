@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import si.apartmamatevz.cmcompanion.BuildConfig
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
 import si.apartmamatevz.cmcompanion.data.SeenInquiriesStore
 import si.apartmamatevz.cmcompanion.ui.dock.DockScreen
@@ -56,6 +57,14 @@ fun CompanionShell(dockViewModel: DockViewModel) {
             isPairing = dockViewModel.isPairing,
             errorMessage = dockViewModel.errorMessage,
             onPair = { request, name -> dockViewModel.pair(request, name, deviceLabel = "Android") },
+            onTestConnection = {
+                dockViewModel.useTestConnection(
+                    bridgeUrl = BuildConfig.DEV_BRIDGE_URL,
+                    installationId = BuildConfig.DEV_INSTALLATION_ID,
+                    deviceToken = BuildConfig.DEV_DEVICE_TOKEN,
+                    deviceLabel = BuildConfig.DEV_DEVICE_LABEL,
+                )
+            },
         )
         return
     }

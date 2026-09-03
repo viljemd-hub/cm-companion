@@ -6,14 +6,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import si.apartmamatevz.cmcompanion.BuildConfig
 import si.apartmamatevz.cmcompanion.bridge.PairingRequest
+import si.apartmamatevz.cmcompanion.data.isOnWifi
 
 /**
  * Server generates codes as strtoupper(bin2hex(random_bytes(4))) split
@@ -34,6 +38,7 @@ fun DockScreen(
     isPairing: Boolean,
     errorMessage: String?,
     onPair: (PairingRequest, displayName: String) -> Unit,
+    onTestConnection: () -> Unit = {},
 ) {
     val baseUrl = remember { mutableStateOf("") }
     val installationId = remember { mutableStateOf("") }
@@ -107,6 +112,21 @@ fun DockScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Pair")
+            }
+        }
+
+        // Debug-build-only shortcut (2026-09-03), backed by
+        // app/dev.secrets.properties - see DockViewModel.useTestConnection()
+        // and build.gradle.kts. Absent (button doesn't render) unless that
+        // local, git-ignored file was present at build time - a fresh
+        // clone of this public repo never shows it. Also gated to WiFi
+        // ("če je v lokalnem omrežju, naj bo vidno sicer ne") - a shared
+        // family debug APK's embedded token shouldn't be one tap away from
+        // anywhere on mobile data.
+        val context = LocalContext.current
+        if (BuildConfig.DEV_DEVICE_TOKEN.isNotBlank() && isOnWifi(context)) {
+            OutlinedButton(onClick = onTestConnection, modifier = Modifier.fillMaxWidth()) {
+                Text("Test connection (${BuildConfig.DEV_DEVICE_LABEL.ifBlank { "debug" }})")
             }
         }
     }
