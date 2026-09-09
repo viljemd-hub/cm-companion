@@ -5,6 +5,29 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+/**
+ * versionCode must strictly increase for BOTH local upgrade-in-place
+ * installs (adb/tap-to-update without uninstalling first, as long as the
+ * signing key also matches - true by default for debug builds from the
+ * same machine) and Play Store updates (which reject a non-increasing
+ * versionCode outright). A hardcoded versionCode = 1 (this file's
+ * original state) silently blocks both once you rebuild twice - derive
+ * it from the git commit count instead, so every commit that changes app
+ * code gets a fresh, monotonic number with no manual bookkeeping.
+ * Falls back to 1 if git isn't available (e.g. a zip-exported source
+ * tree with no .git directory).
+ */
+val gitCommitCount: Int = try {
+    val process = ProcessBuilder("git", "rev-list", "--count", "HEAD")
+        .directory(rootDir)
+        .redirectErrorStream(true)
+        .start()
+    process.waitFor()
+    process.inputStream.bufferedReader().readText().trim().toIntOrNull() ?: 1
+} catch (e: Exception) {
+    1
+}
+
 // Local-only debug "Test connection" shortcut (see DockScreen.kt) - reads
 // app/dev.secrets.properties (git-ignored, see the .example file next to
 // it). Absent by default: a fresh clone builds fine with all four fields
@@ -24,7 +47,7 @@ android {
         applicationId = "si.apartmamatevz.cmcompanion"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
+        versionCode = gitCommitCount
         versionName = "0.1.0"
 
         buildConfigField("String", "DEV_BRIDGE_URL", "\"${devSecret("DEV_BRIDGE_URL")}\"")
