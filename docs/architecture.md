@@ -61,7 +61,7 @@ This is the same hard rule the plan doc states for the whole app (`CM_Mobile_Com
 
 CM is self-hosted by design (see `pro_dev_roadmap` — the earlier TWA/Digital Asset Links plan already established that "one build = one domain" is natural here, not a limitation, because each owner runs exactly one install of their own). Companion carries that same principle one step further: it never hardcodes a domain, backend, or "the" CM instance. Every [`InstallationConnection`](../app/src/main/kotlin/si/apartmamatevz/cmcompanion/data/InstallationConnection.kt) carries its own `base_url` — pairing with a second, entirely unrelated CM installation (different owner, different server, different domain) is not a special case, it's the same code path run twice. This is what "universal docking" means: the app docks onto whichever CM installation hands it a valid pairing code, full stop.
 
-## 6. Pairing protocol (locked now, QR UI comes later)
+## 6. Pairing protocol (live end-to-end; in-app QR scanning still future work)
 
 Pairing code and permanent device token are explicitly two different things:
 
@@ -84,9 +84,9 @@ one-time code is never used again
 Two entry points resolve to the same [`PairingRequest`](../app/src/main/kotlin/si/apartmamatevz/cmcompanion/bridge/PairingDeepLink.kt) and the same exchange call, so they can never drift apart the way the RFID-reader dual-implementation bug once did (`windows_agents_remote_control` — "ker nisem vedel kateri UI sva uporabljala"):
 
 1. **Manual entry** (`DockScreen`) — base URL, installation ID, code typed in by hand. Built in v0.1.
-2. **Deep link / QR** — `cmcompanion://pair?url=...&installation_id=...&code=...`, rendered as a QR code by the CM admin panel. Protocol parsing (`parsePairingDeepLink`) exists from v0.1; the camera/scanner screen itself is future work.
+2. **Deep link / QR generation** — `cmcompanion://pair?url=...&installation_id=...&code=...`, rendered as a QR code by the CM admin panel (both CM Free and CM PRO). Protocol parsing (`parsePairingDeepLink`) exists from v0.1 and is exercised by real deep links today; QR *generation* is live server-side. In-app camera scanning of that QR (as opposed to tapping the deep link) remains future work — today's flow is manual entry or an actual deep link tap, not point-camera-at-screen.
 
-**Not implemented anywhere yet, tracked as the real blocker:** the server-side pairing exchange endpoint and the `dashboard.*` / `action.inquiry_respond` Bridge scopes this app needs. See `CM_Mobile_Companion_Plan_v0.1.md` §5 in the `channel-manager-internal` (`pro-dev`) repo for the authoritative list — this repo intentionally does not duplicate that spec, only implements against it.
+**Live end-to-end, tested against real installations:** the server-side pairing exchange endpoint and the `dashboard.*` / `action.inquiry_respond` Bridge scopes this app needs are built and running on both CM Free and CM PRO, including real multi-installation docking on one phone. See `CM_Mobile_Companion_Plan_v0.1.md` §5 in the `channel-manager-internal` (`pro-dev`) repo for the authoritative scope list — this repo intentionally does not duplicate that spec, only implements against it.
 
 ## 7. Explicitly out of scope for v0.1
 
