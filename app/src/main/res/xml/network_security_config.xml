@@ -22,5 +22,10 @@
     <domain-config cleartextTrafficPermitted="true">
         <!-- T630 shadow server (2026-09-17) - no public domain/TLS, LAN-only test install -->
         <domain includeSubdomains="false">192.168.2.146</domain>
+        <!-- 57/M2-Air pro-dev, LAN-IP fallback (2026-09-17) - apartmamatevz.eu (HTTPS)
+             is the normal path; this is only for testing directly by LAN IP when the
+             public domain/router path is flaky (e.g. a hairpin-NAT test-from-same-LAN
+             quirk, not a real outage) -->
+        <domain includeSubdomains="false">192.168.2.57</domain>
     </domain-config>
 </network-security-config>
