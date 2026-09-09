@@ -22,8 +22,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import si.apartmamatevz.cmcompanion.BuildConfig
+import si.apartmamatevz.cmcompanion.bridge.AttentionKind
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
 import si.apartmamatevz.cmcompanion.data.SeenInquiriesStore
+import si.apartmamatevz.cmcompanion.ui.alerts.AlertsScreen
+import si.apartmamatevz.cmcompanion.ui.alerts.AlertsViewModel
 import si.apartmamatevz.cmcompanion.ui.connection.ConnectionScreen
 import si.apartmamatevz.cmcompanion.ui.dock.DockScreen
 import si.apartmamatevz.cmcompanion.ui.dock.DockViewModel
@@ -117,6 +120,7 @@ fun CompanionShell(dockViewModel: DockViewModel) {
         // until an unrelated full reload happened to occur.
         val todayViewModel: TodayViewModel = viewModel(factory = seenStoreFactory)
         val inquiriesViewModel: InquiriesViewModel = viewModel(factory = seenStoreFactory)
+        val alertsViewModel: AlertsViewModel = viewModel()
         var pendingInquiryId by remember { mutableStateOf<String?>(null) }
 
         Column(modifier = Modifier.padding(padding)) {
@@ -144,10 +148,23 @@ fun CompanionShell(dockViewModel: DockViewModel) {
                     onAddAnother = { showAddInstallation = true },
                     onForget = { connection -> dockViewModel.forget(connection) },
                 )
-                // Alerts is the next increment (see pro_dev_roadmap memory,
-                // 2026-09-17 - only meaningful once Connection/multi-
-                // installation, just built above, exists to hang off of).
-                else -> Text("TODO: ${tab.name} screen for ${selected?.displayName}")
+                CompanionTab.ALERTS -> AlertsScreen(
+                    connections = connections,
+                    activeConnectionId = selected?.id,
+                    viewModel = alertsViewModel,
+                    onItemClick = { item ->
+                        val target = connections.firstOrNull { it.id == item.connectionId }
+                        if (target != null) {
+                            selected = target
+                            if (item.kind == AttentionKind.INQUIRY) {
+                                pendingInquiryId = item.id
+                                tab = CompanionTab.INQUIRIES
+                            } else {
+                                tab = CompanionTab.TODAY
+                            }
+                        }
+                    },
+                )
             }
         }
     }

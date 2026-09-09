@@ -21,6 +21,15 @@ data class AttentionItem(
     val detail: String,
     val unit: String,
     val createdAt: String,
+    // Set only by the cross-installation Alerts screen (2026-09-17) - null
+    // in Today's own single-installation use, where it's implicit. Every
+    // item already carries its own connectionId there too (see
+    // ui/alerts/AlertsViewModel.kt) - this is the same identification seam
+    // a future cross-owner CM Community query would need, kept compatible
+    // on purpose per the user's own framing, not because Community exists
+    // yet (it doesn't).
+    val installationLabel: String? = null,
+    val connectionId: String? = null,
 )
 
 enum class AttentionKind { INQUIRY, ALERT }
@@ -64,3 +73,7 @@ fun mergeAttentionItems(inquiries: List<AttentionItem>, alerts: List<AttentionIt
     val sortedAlerts = alerts.sortedByDescending { it.createdAt }
     return sortedInquiries + sortedAlerts
 }
+
+/** Stamps a batch of items with which installation they came from - see AlertsViewModel. */
+fun List<AttentionItem>.taggedWith(installationLabel: String, connectionId: String): List<AttentionItem> =
+    map { it.copy(installationLabel = installationLabel, connectionId = connectionId) }
