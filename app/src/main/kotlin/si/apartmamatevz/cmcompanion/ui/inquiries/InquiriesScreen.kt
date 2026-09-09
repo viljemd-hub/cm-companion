@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import si.apartmamatevz.cmcompanion.bridge.Inquiry
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
+import si.apartmamatevz.cmcompanion.ui.theme.CmCard
+import si.apartmamatevz.cmcompanion.ui.theme.CmColors
 import si.apartmamatevz.cmcompanion.ui.today.AUTO_REFRESH_INTERVAL_MS
 
 /**
@@ -61,13 +64,13 @@ fun InquiriesScreen(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         when {
             viewModel.isLoading && viewModel.inquiries.isEmpty() -> CircularProgressIndicator()
             viewModel.errorMessage != null -> Text("Could not load inquiries: ${viewModel.errorMessage}")
-            viewModel.inquiries.isEmpty() -> Text("No pending inquiries.")
+            viewModel.inquiries.isEmpty() -> Text("No pending inquiries.", color = CmColors.TextFaint)
             else -> viewModel.inquiries.forEach { inquiry ->
                 InquiryRow(
                     inquiry = inquiry,
@@ -95,19 +98,17 @@ private fun InquiryRow(
     onBack: () -> Unit,
     onUnmarkSeen: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onToggle),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
+    CmCard(modifier = Modifier.clickable(onClick = onToggle)) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         // Visible flag state (2026-09-03: "kaj pa če bi bile zastavice
         // vidne?") - a seen inquiry shows a marker even collapsed, so the
         // host can spot at a glance what still needs a fresh look.
         val marker = if (seen) "✓ " else "🚩 "
         Text(
             "$marker${inquiry.unit} — ${inquiry.from} → ${inquiry.to} (${inquiry.nights} nights)",
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
+            color = if (seen) CmColors.TextMuted else CmColors.TextPrimary,
         )
 
         if (expanded) {
@@ -116,8 +117,8 @@ private fun InquiryRow(
                 if (inquiry.kids06 > 0) add("${inquiry.kids06} kids (0-6)")
                 if (inquiry.kids712 > 0) add("${inquiry.kids712} kids (7-12)")
             }
-            Text(if (guestParts.isEmpty()) "Guest count unavailable" else guestParts.joinToString(" · "))
-            Text("Guest country: ${inquiry.guestPhoneCountry ?: "unknown"}")
+            Text(if (guestParts.isEmpty()) "Guest count unavailable" else guestParts.joinToString(" · "), color = CmColors.TextSecondary)
+            Text("Guest country: ${inquiry.guestPhoneCountry ?: "unknown"}", color = CmColors.TextSecondary)
 
             if (accepting) {
                 CircularProgressIndicator()
@@ -139,6 +140,7 @@ private fun InquiryRow(
                     }
                 }
             }
+        }
         }
     }
 }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -12,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
+import si.apartmamatevz.cmcompanion.ui.theme.CmCard
+import si.apartmamatevz.cmcompanion.ui.theme.CmColors
 
 /**
  * Multi-installation management (2026-09-17): one owner's own paired
@@ -34,8 +37,8 @@ fun ConnectionScreen(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         connections.forEach { connection ->
             ConnectionRow(connection, onForget = { onForget(connection) })
@@ -49,14 +52,21 @@ fun ConnectionScreen(
 
 @Composable
 private fun ConnectionRow(connection: InstallationConnection, onForget: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(connection.displayName, fontWeight = FontWeight.Bold)
-        Text("Installation ID: ${connection.installationId}")
-        Text("Bridge URL: ${connection.baseUrl}")
-        Text("Status: ${connection.status}")
-        Text("Scopes: ${connection.scopes.joinToString(", ")}")
-        OutlinedButton(onClick = onForget, modifier = Modifier.fillMaxWidth()) {
-            Text("Forget this device")
+    CmCard {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                connection.displayName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = CmColors.TextPrimary,
+            )
+            Text("Installation ID: ${connection.installationId}", color = CmColors.TextMuted)
+            Text("Bridge URL: ${connection.baseUrl}", color = CmColors.TextMuted)
+            Text("Status: ${connection.status}", color = CmColors.Accent)
+            Text("Scopes: ${connection.scopes.joinToString(", ")}", color = CmColors.TextFaint)
+            OutlinedButton(onClick = onForget, modifier = Modifier.fillMaxWidth()) {
+                Text("Forget this device", color = CmColors.Danger)
+            }
         }
     }
 }

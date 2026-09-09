@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,6 +18,8 @@ import kotlinx.coroutines.delay
 import si.apartmamatevz.cmcompanion.bridge.AttentionItem
 import si.apartmamatevz.cmcompanion.bridge.AttentionKind
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
+import si.apartmamatevz.cmcompanion.ui.theme.CmCard
+import si.apartmamatevz.cmcompanion.ui.theme.CmColors
 import si.apartmamatevz.cmcompanion.ui.today.AUTO_REFRESH_INTERVAL_MS
 
 /**
@@ -48,26 +51,28 @@ fun AlertsScreen(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(20.dp),
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         when {
             connections.size <= 1 -> Text(
                 "Alerts becomes useful once you've paired more than one installation - " +
                     "Today already covers everything for this one.",
+                color = CmColors.TextFaint,
             )
             viewModel.isLoading && viewModel.items.isEmpty() -> CircularProgressIndicator()
             viewModel.errorMessage != null -> Text("Could not load alerts: ${viewModel.errorMessage}")
-            viewModel.items.isEmpty() -> Text("All clear on your other installations.")
+            viewModel.items.isEmpty() -> Text("All clear on your other installations.", color = CmColors.Accent)
             else -> viewModel.items.forEach { item ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onItemClick(item) },
-                ) {
-                    Text(item.installationLabel ?: "", fontWeight = FontWeight.Bold)
+                CmCard(modifier = Modifier.clickable { onItemClick(item) }) {
+                    Text(
+                        item.installationLabel ?: "",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = CmColors.Accent,
+                    )
                     val marker = if (item.kind == AttentionKind.INQUIRY) "●" else "○"
-                    Text("$marker ${item.title} — ${item.unit} — ${item.detail}")
+                    Text("$marker ${item.title} — ${item.unit} — ${item.detail}", color = CmColors.TextSecondary)
                 }
             }
         }

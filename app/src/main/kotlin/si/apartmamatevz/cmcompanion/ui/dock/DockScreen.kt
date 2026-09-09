@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -14,10 +15,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import si.apartmamatevz.cmcompanion.BuildConfig
 import si.apartmamatevz.cmcompanion.bridge.PairingRequest
 import si.apartmamatevz.cmcompanion.data.isOnWifi
+import si.apartmamatevz.cmcompanion.ui.theme.CmColors
 
 /**
  * Server generates codes as strtoupper(bin2hex(random_bytes(4))) split
@@ -53,8 +56,17 @@ fun DockScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Add CM installation")
-        Text("Generate a pairing code from the CM admin panel, then enter it here.")
+        Text(
+            "CM Companion",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = CmColors.Accent,
+        )
+        Text("Add CM installation", style = MaterialTheme.typography.titleMedium, color = CmColors.TextPrimary)
+        Text(
+            "Generate a pairing code from the CM admin panel, then enter it here.",
+            color = CmColors.TextMuted,
+        )
 
         OutlinedTextField(
             value = displayName.value,
@@ -83,10 +95,13 @@ fun DockScreen(
             modifier = Modifier.fillMaxWidth(),
         )
         if (code.value.isNotBlank() && !PAIRING_CODE_PATTERN.matches(code.value)) {
-            Text("Expected format: XXXX-XXXX (e.g. A1B2-C3D4) - make sure you copied the short code, not the deep link.")
+            Text(
+                "Expected format: XXXX-XXXX (e.g. A1B2-C3D4) - make sure you copied the short code, not the deep link.",
+                color = CmColors.Danger,
+            )
         }
 
-        errorMessage?.let { Text(it) }
+        errorMessage?.let { Text(it, color = CmColors.Danger) }
 
         if (isPairing) {
             CircularProgressIndicator()

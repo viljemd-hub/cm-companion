@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,6 +20,8 @@ import si.apartmamatevz.cmcompanion.bridge.AttentionKind
 import si.apartmamatevz.cmcompanion.bridge.TodayDashboard
 import si.apartmamatevz.cmcompanion.bridge.TodayStay
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
+import si.apartmamatevz.cmcompanion.ui.theme.CmCard
+import si.apartmamatevz.cmcompanion.ui.theme.CmColors
 
 /** How often Today/Alerts re-poll while visible - see AUTO_REFRESH_INTERVAL_MS doc below. */
 const val AUTO_REFRESH_INTERVAL_MS = 30_000L
@@ -51,8 +54,8 @@ fun TodayScreen(connection: InstallationConnection, viewModel: TodayViewModel, o
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         when {
             viewModel.isLoading && viewModel.dashboard == null -> CircularProgressIndicator()
@@ -75,7 +78,7 @@ private fun TodayContent(dashboard: TodayDashboard, attention: List<AttentionIte
         summary = "${dashboard.totals.hostingNow} reservation(s) · ${dashboard.totals.hostingNowGuests} guests",
     ) {
         if (hostingStays.isEmpty()) {
-            Text("No one in-house today.")
+            Text("No one in-house today.", color = CmColors.TextFaint)
         } else {
             hostingStays.forEach { (unit, stay) -> StayRow(unit, stay, dateLabel = "until") }
         }
@@ -86,7 +89,7 @@ private fun TodayContent(dashboard: TodayDashboard, attention: List<AttentionIte
         summary = "${dashboard.totals.arrivals} arrival(s) · ${dashboard.totals.arrivalGuests} guests",
     ) {
         if (arrivalStays.isEmpty()) {
-            Text("No arrivals today.")
+            Text("No arrivals today.", color = CmColors.TextFaint)
         } else {
             arrivalStays.forEach { (unit, stay) -> StayRow(unit, stay) }
         }
@@ -97,7 +100,7 @@ private fun TodayContent(dashboard: TodayDashboard, attention: List<AttentionIte
         summary = "${dashboard.totals.departures} departure(s) · ${dashboard.totals.departureGuests} guests",
     ) {
         if (departureStays.isEmpty()) {
-            Text("No departures today.")
+            Text("No departures today.", color = CmColors.TextFaint)
         } else {
             departureStays.forEach { (unit, stay) -> StayRow(unit, stay) }
         }
@@ -106,29 +109,40 @@ private fun TodayContent(dashboard: TodayDashboard, attention: List<AttentionIte
 
 @Composable
 private fun AttentionSection(items: List<AttentionItem>, onInquiryClick: (String) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            if (items.isEmpty()) "All clear" else "${items.size} item(s) need attention",
-            fontWeight = FontWeight.Bold,
-        )
-        items.forEach { item ->
-            val marker = if (item.kind == AttentionKind.INQUIRY) "●" else "○"
-            val rowModifier = if (item.kind == AttentionKind.INQUIRY) {
-                Modifier.clickable { onInquiryClick(item.id) }
-            } else {
-                Modifier
+    val accentColor = if (items.isEmpty()) CmColors.Accent else CmColors.Danger
+    CmCard {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                if (items.isEmpty()) "All clear" else "${items.size} item(s) need attention",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = accentColor,
+            )
+            items.forEach { item ->
+                val marker = if (item.kind == AttentionKind.INQUIRY) "●" else "○"
+                val rowModifier = if (item.kind == AttentionKind.INQUIRY) {
+                    Modifier.clickable { onInquiryClick(item.id) }
+                } else {
+                    Modifier
+                }
+                Text(
+                    "$marker ${item.title} — ${item.unit} — ${item.detail}",
+                    modifier = rowModifier.fillMaxWidth(),
+                    color = CmColors.TextSecondary,
+                )
             }
-            Text("$marker ${item.title} — ${item.unit} — ${item.detail}", modifier = rowModifier)
         }
     }
 }
 
 @Composable
 private fun Section(title: String, summary: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(title, fontWeight = FontWeight.Bold)
-        Text(summary)
-        content()
+    CmCard {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(summary, color = CmColors.TextMuted)
+            content()
+        }
     }
 }
 
@@ -136,5 +150,5 @@ private fun Section(title: String, summary: String, content: @Composable () -> U
 private fun StayRow(unit: String, stay: TodayStay, dateLabel: String? = null) {
     val guestText = stay.guestCount?.let { "$it guests" } ?: "guest count unavailable"
     val tail = if (dateLabel != null && stay.checkout != null) " · $dateLabel ${stay.checkout}" else ""
-    Text("$unit — $guestText$tail")
+    Text("$unit — $guestText$tail", color = CmColors.TextSecondary)
 }

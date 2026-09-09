@@ -2,9 +2,15 @@ package si.apartmamatevz.cmcompanion.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Mail
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -45,7 +51,19 @@ import si.apartmamatevz.cmcompanion.ui.today.TodayViewModel
  * one paired installation the switcher is barely noticeable, with several
  * it's a plain dropdown - no account-management screen in v0.1.
  */
-enum class CompanionTab { TODAY, ALERTS, INQUIRIES, CONNECTION }
+enum class CompanionTab(val label: String) {
+    TODAY("Today"),
+    ALERTS("Alerts"),
+    INQUIRIES("Inquiries"),
+    CONNECTION("Connection"),
+}
+
+private fun CompanionTab.icon() = when (this) {
+    CompanionTab.TODAY -> Icons.Filled.Home
+    CompanionTab.ALERTS -> Icons.Filled.Notifications
+    CompanionTab.INQUIRIES -> Icons.Filled.Mail
+    CompanionTab.CONNECTION -> Icons.Filled.Link
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,8 +109,8 @@ fun CompanionShell(dockViewModel: DockViewModel) {
                     NavigationBarItem(
                         selected = tab == candidate,
                         onClick = { tab = candidate },
-                        icon = {},
-                        label = { Text(candidate.name) },
+                        icon = { Icon(candidate.icon(), contentDescription = candidate.label) },
+                        label = { Text(candidate.label) },
                     )
                 }
             }

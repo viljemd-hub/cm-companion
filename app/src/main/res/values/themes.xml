@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.CmCompanion" parent="android:Theme.Material.NoActionBar" />
+    <!-- windowBackground matches CmColors.Background (Theme.kt) so there's
+         no white flash between the launcher and Compose taking over. -->
+    <style name="Theme.CmCompanion" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/cm_background</item>
+        <item name="android:statusBarColor">@color/cm_background</item>
+    </style>
 </resources>

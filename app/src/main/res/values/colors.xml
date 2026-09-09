@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mirrors CmColors.Background in Theme.kt - needed here too since
+         android:windowBackground (themes.xml) is a plain XML theme
+         attribute, resolved before Compose ever runs. -->
+    <color name="cm_background">#FF0B1220</color>
+</resources>
