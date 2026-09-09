@@ -15,8 +15,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import si.apartmamatevz.cmcompanion.bridge.Inquiry
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
+import si.apartmamatevz.cmcompanion.ui.today.AUTO_REFRESH_INTERVAL_MS
 
 /**
  * Expandable list, not a separate detail screen (2026-09-03 decision) -
@@ -24,6 +26,11 @@ import si.apartmamatevz.cmcompanion.data.InstallationConnection
  * breakdown and the single Accept action. "Back" is just collapsing the
  * row / returning to Today - see InquiriesViewModel.toggleExpanded() for
  * why expanding alone already marks it seen.
+ *
+ * Auto-refreshes every AUTO_REFRESH_INTERVAL_MS while visible, same as
+ * Today/Alerts (2026-09-17) - load() only replaces the inquiry list and
+ * seen-state, never expandedId/acceptingId, so a background refresh
+ * can't collapse a row the host is mid-way reading or accepting.
  */
 @Composable
 fun InquiriesScreen(
@@ -32,7 +39,12 @@ fun InquiriesScreen(
     initialExpandedId: String? = null,
     onDone: () -> Unit,
 ) {
-    LaunchedEffect(connection.id) { viewModel.load(connection) }
+    LaunchedEffect(connection.id) {
+        while (true) {
+            viewModel.load(connection)
+            delay(AUTO_REFRESH_INTERVAL_MS)
+        }
+    }
 
     // Arriving here from an Attention tap should land already expanded on
     // the inquiry the host tapped - fixes a real 2026-09-03 report ("klik

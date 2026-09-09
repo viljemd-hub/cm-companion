@@ -13,9 +13,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import si.apartmamatevz.cmcompanion.bridge.AttentionItem
 import si.apartmamatevz.cmcompanion.bridge.AttentionKind
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
+import si.apartmamatevz.cmcompanion.ui.today.AUTO_REFRESH_INTERVAL_MS
 
 /**
  * Cross-installation feed - see AlertsViewModel for why the active
@@ -23,6 +25,11 @@ import si.apartmamatevz.cmcompanion.data.InstallationConnection
  * Tapping a row switches the active installation (and, for an inquiry,
  * jumps to Inquiries pre-expanded) via onItemClick - same pattern as
  * Today's own ATTENTION section.
+ *
+ * Auto-refreshes every AUTO_REFRESH_INTERVAL_MS while visible, same as
+ * Today and for the same reason (2026-09-17: no manual refresh button,
+ * Companion's whole point is showing current data) - cancelled
+ * automatically on navigating away.
  */
 @Composable
 fun AlertsScreen(
@@ -31,7 +38,12 @@ fun AlertsScreen(
     viewModel: AlertsViewModel,
     onItemClick: (AttentionItem) -> Unit,
 ) {
-    LaunchedEffect(connections, activeConnectionId) { viewModel.load(connections, activeConnectionId) }
+    LaunchedEffect(connections, activeConnectionId) {
+        while (true) {
+            viewModel.load(connections, activeConnectionId)
+            delay(AUTO_REFRESH_INTERVAL_MS)
+        }
+    }
 
     Column(
         modifier = Modifier

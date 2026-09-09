@@ -13,11 +13,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import si.apartmamatevz.cmcompanion.bridge.AttentionItem
 import si.apartmamatevz.cmcompanion.bridge.AttentionKind
 import si.apartmamatevz.cmcompanion.bridge.TodayDashboard
 import si.apartmamatevz.cmcompanion.bridge.TodayStay
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
+
+/** How often Today/Alerts re-poll while visible - see AUTO_REFRESH_INTERVAL_MS doc below. */
+const val AUTO_REFRESH_INTERVAL_MS = 30_000L
 
 /**
  * v0.1 "host situational awareness" screen - see docs/architecture.md and
@@ -27,10 +31,22 @@ import si.apartmamatevz.cmcompanion.data.InstallationConnection
  * aggregate headcount, never a name. Attention sits at the very top -
  * "in 5 seconds, is everything OK and what needs me" is the screen's job,
  * not a full admin dashboard.
+ *
+ * Auto-refreshes every AUTO_REFRESH_INTERVAL_MS while this screen is
+ * visible, no manual refresh button (2026-09-17, explicit user call: the
+ * whole point of Companion is showing current real data, not requiring a
+ * pull-to-refresh gesture). The loop lives in a LaunchedEffect, so it's
+ * automatically cancelled the moment the host navigates to another tab -
+ * no polling happens off-screen.
  */
 @Composable
 fun TodayScreen(connection: InstallationConnection, viewModel: TodayViewModel, onInquiryClick: (String) -> Unit) {
-    LaunchedEffect(connection.id) { viewModel.load(connection) }
+    LaunchedEffect(connection.id) {
+        while (true) {
+            viewModel.load(connection)
+            delay(AUTO_REFRESH_INTERVAL_MS)
+        }
+    }
 
     Column(
         modifier = Modifier
