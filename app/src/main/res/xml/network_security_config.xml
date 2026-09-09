@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 9+ blocks plain HTTP by default. CM Bridge Protocol v1 already
+  documents (how_to_make_bridge_key.txt) that it doesn't encrypt transport
+  by itself and treats a local-LAN self-hosted install over HTTP as an
+  accepted, known limitation - but Android's network-security-config has
+  no CIDR/range syntax for IPs, only exact domain/IP matches, so "allow
+  cleartext for any private LAN" isn't expressible declaratively without
+  either allowing it everywhere (rejected - too broad for a public repo's
+  default policy) or listing exact hosts (chosen, 2026-09-17).
+
+  base-config stays cleartextTrafficPermitted="false" (Android's own
+  secure default) for everything NOT explicitly listed below - a fresh
+  pairing against a real HTTPS domain (e.g. apartmamatevz.eu) needs no
+  entry here at all.
+
+  To pair with another cleartext-only LAN test install, add its IP as a
+  new <domain> entry below and rebuild - this list is meant to grow with
+  real test servers, not to become a general "allow local networks" rule.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- T630 shadow server (2026-09-17) - no public domain/TLS, LAN-only test install -->
+        <domain includeSubdomains="false">192.168.2.146</domain>
+    </domain-config>
+</network-security-config>
