@@ -2,9 +2,11 @@
 
 CM Companion is the official Android app for [CM Free / Plus / PRO](https://github.com/viljemd-hub/channel-manager) — a self-hosted reservation and channel-manager system for small accommodation providers.
 
+Pair your phone with your own CM installation in under a minute — no account to create, no cloud middleman — and get today's arrivals/departures, open alerts, and guest inquiries on your phone instead of having to open the admin panel on a laptop. Works with any CM tier reachable over HTTPS: CM Free (self-hosted, free to run), Plus, or PRO.
+
 It is an open-source reference client: everything it does, it does through CM's public **Bridge Protocol v1**, the same API surface any third-party integrator would use. There is no private shortcut into CM's internals anywhere in this app. If a screen needs a capability the Bridge doesn't expose, that's a documented Bridge scope added on the server side — never a special case here.
 
-**Status: early scaffold (v0.1 planning stage).** The app skeleton, data model, and pairing protocol are built. The server-side Bridge endpoints this app needs (dashboard scopes, device pairing) don't exist yet — see [Status](#status) below.
+**Status: working, live-tested.** Pairing (manual entry + deep link), the four v0.1 tabs, and all `dashboard.*` / `action.inquiry_respond` Bridge scopes are built and tested end-to-end against real CM Free, Plus, and PRO installations, including multi-installation docking (two+ installations paired on the same phone at once). CM Free ships this pairing flow out of the box, and a signed APK is published from CM Free's own download page — anyone running CM Free can hand a guest-free download link to their own phone with no build step. See [Status](#status) below for what's still open.
 
 ## Why this exists
 
@@ -56,21 +58,24 @@ Kotlin, Jetpack Compose, OkHttp, no Room/server-side database — a thin client,
 
 ## Status
 
-Scaffold complete:
+Built and live-tested against real CM installations:
 
 - Multi-installation connection model + Keystore-backed token storage
 - Bridge Protocol v1 HTTP client (GET/POST, header-only auth)
-- Pairing protocol (manual entry + `cmcompanion://pair` deep link parsing)
-- App shell with an installation switcher and the four planned v0.1 tabs (Today / Alerts / Inquiries / Connection)
+- Pairing protocol (manual entry + `cmcompanion://pair` deep link parsing), including QR pairing from the CM admin panel
+- Server-side pairing exchange, device tokens, and self-service unpair
+- Server-side `dashboard.today`, `dashboard.alerts`, `dashboard.inquiries`, and `action.inquiry_respond` Bridge scopes, on both CM Free and CM PRO
+- The four v0.1 tab screens (Today / Alerts / Inquiries / Connection), all live, not placeholders
+- Multi-installation docking tested for real: the same phone paired to a CM Free install and a CM PRO install at once
 
-Not yet built, and blocking real use against a live CM installation:
+Not yet built:
 
-- Server-side pairing exchange endpoint (`POST {bridge}/pairing/exchange`)
-- Server-side `dashboard.today`, `dashboard.alerts`, `dashboard.inquiries`, `action.inquiry_respond` Bridge scopes
-- The four tab screens themselves (currently placeholders)
-- QR scanner screen for the pairing deep link
+- Plus-tier availability query (cross-installation sweep) — architected for, not implemented
+- Explicit pairing test against a CM Plus installation (only Free and PRO have been paired so far)
+- App launcher icon (deliberately deferred until Free/Plus/PRO all reach parity)
+- Play Store listing / Play App Signing enrollment
 
-The server-side plan for all of the above lives in `CM_Mobile_Companion_Plan_v0.1.md` in the main CM PRO working repo — this app is built against that plan, not duplicating it.
+The server-side plan for the Bridge scopes above lives in `CM_Mobile_Companion_Plan_v0.1.md` in the main CM PRO working repo — this app is built against that plan, not duplicating it.
 
 ## Building
 
