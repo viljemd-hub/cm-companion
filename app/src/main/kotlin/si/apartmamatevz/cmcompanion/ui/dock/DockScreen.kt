@@ -39,6 +39,8 @@ fun DockScreen(
     errorMessage: String?,
     onPair: (PairingRequest, displayName: String) -> Unit,
     onTestConnection: () -> Unit = {},
+    showCancel: Boolean = false,
+    onCancel: () -> Unit = {},
 ) {
     val baseUrl = remember { mutableStateOf("") }
     val installationId = remember { mutableStateOf("") }
@@ -127,6 +129,15 @@ fun DockScreen(
         if (BuildConfig.DEV_DEVICE_TOKEN.isNotBlank() && isOnWifi(context)) {
             OutlinedButton(onClick = onTestConnection, modifier = Modifier.fillMaxWidth()) {
                 Text("Test connection (${BuildConfig.DEV_DEVICE_LABEL.ifBlank { "debug" }})")
+            }
+        }
+
+        // Only shown when reached via "Add another installation" from an
+        // existing Connection screen - the very first pairing (no
+        // connections yet) has nothing to cancel back to.
+        if (showCancel) {
+            OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
+                Text("Cancel")
             }
         }
     }

@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import si.apartmamatevz.cmcompanion.BuildConfig
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
 import si.apartmamatevz.cmcompanion.data.SeenInquiriesStore
+import si.apartmamatevz.cmcompanion.ui.connection.ConnectionScreen
 import si.apartmamatevz.cmcompanion.ui.dock.DockScreen
 import si.apartmamatevz.cmcompanion.ui.dock.DockViewModel
 import si.apartmamatevz.cmcompanion.ui.inquiries.InquiriesScreen
@@ -51,8 +53,15 @@ fun CompanionShell(dockViewModel: DockViewModel) {
     val connections = dockViewModel.connections
     var selected by remember(connections) { mutableStateOf(connections.firstOrNull()) }
     var tab by remember { mutableStateOf(CompanionTab.TODAY) }
+    var showAddInstallation by remember { mutableStateOf(false) }
 
-    if (selected == null) {
+    // Closes "Add another installation" mode automatically once a new
+    // pairing actually lands in the store - the alternative (tracking
+    // pair()'s async success explicitly) is more plumbing for the same
+    // result, since any change to connections while adding means it worked.
+    LaunchedEffect(connections) { showAddInstallation = false }
+
+    if (selected == null || showAddInstallation) {
         DockScreen(
             isPairing = dockViewModel.isPairing,
             errorMessage = dockViewModel.errorMessage,
@@ -65,6 +74,8 @@ fun CompanionShell(dockViewModel: DockViewModel) {
                     deviceLabel = BuildConfig.DEV_DEVICE_LABEL,
                 )
             },
+            showCancel = selected != null,
+            onCancel = { showAddInstallation = false },
         )
         return
     }
@@ -128,9 +139,14 @@ fun CompanionShell(dockViewModel: DockViewModel) {
                         todayViewModel.load(selected!!)
                     },
                 )
-                // Alerts/Connection are the next increment (see
-                // pro_dev_roadmap memory, 2026-09-03 TODAY design review) -
-                // deliberately not bundled into this pass.
+                CompanionTab.CONNECTION -> ConnectionScreen(
+                    connections = connections,
+                    onAddAnother = { showAddInstallation = true },
+                    onForget = { connection -> dockViewModel.forget(connection) },
+                )
+                // Alerts is the next increment (see pro_dev_roadmap memory,
+                // 2026-09-17 - only meaningful once Connection/multi-
+                // installation, just built above, exists to hang off of).
                 else -> Text("TODO: ${tab.name} screen for ${selected?.displayName}")
             }
         }

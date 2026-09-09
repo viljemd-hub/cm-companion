@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import si.apartmamatevz.cmcompanion.bridge.BridgeClient
 import si.apartmamatevz.cmcompanion.bridge.BridgeException
 import si.apartmamatevz.cmcompanion.bridge.PairingExchange
 import si.apartmamatevz.cmcompanion.bridge.PairingRequest
@@ -110,11 +111,24 @@ class DockViewModel(private val store: ConnectionStore) : ViewModel() {
         connections = store.list()
     }
 
-    fun forget(connectionId: String) {
-        // TODO once a real "Connected devices" revoke endpoint exists server-side
-        // (see bridge/PairingExchange.kt): call it here before removing locally,
-        // so a lost/stolen phone can't keep using a token CM still thinks is valid.
-        store.remove(connectionId)
-        connections = store.list()
+    /**
+     * "Forget this device" (Connection screen, 2026-09-17) - best-effort
+     * server-side revoke (admin/api/bridge/v1/pairing/unpair.php, self-
+     * service by presenting the device's own token) followed by local
+     * removal regardless of whether the server call succeeded. Local
+     * removal always happens even if unreachable/offline - the host's
+     * intent ("stop using this on my phone") shouldn't be blocked by a
+     * network hiccup, the server side is a courtesy, not a precondition.
+     */
+    fun forget(connection: InstallationConnection) {
+        viewModelScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    BridgeClient(connection).post("pairing/unpair.php", JSONObject())
+                }
+            }
+            store.remove(connection.id)
+            connections = store.list()
+        }
     }
 }
