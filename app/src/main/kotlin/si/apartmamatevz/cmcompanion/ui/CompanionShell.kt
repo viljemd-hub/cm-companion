@@ -3,10 +3,10 @@ package si.apartmamatevz.cmcompanion.ui
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,11 +58,14 @@ enum class CompanionTab(val label: String) {
     CONNECTION("Connection"),
 }
 
+// Home/Email/Notifications/Settings are in material-icons-core; Link/Mail
+// (originally tried here) are extended-only and failed the build - stick
+// to the small core icon set rather than pulling in ~2000 extra icons.
 private fun CompanionTab.icon() = when (this) {
     CompanionTab.TODAY -> Icons.Filled.Home
     CompanionTab.ALERTS -> Icons.Filled.Notifications
-    CompanionTab.INQUIRIES -> Icons.Filled.Mail
-    CompanionTab.CONNECTION -> Icons.Filled.Link
+    CompanionTab.INQUIRIES -> Icons.Filled.Email
+    CompanionTab.CONNECTION -> Icons.Filled.Settings
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
