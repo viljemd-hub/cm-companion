@@ -19,6 +19,20 @@ import si.apartmamatevz.cmcompanion.data.InstallationConnection
 import java.util.UUID
 
 /**
+ * Soft cap on paired installations (2026-09-17), not a technical limit -
+ * Android storage handles far more than this fine. Two real reasons: the
+ * installation switcher/Connection list stays a plain, glanceable list
+ * only up to roughly this size, and the planned Plus-tier "quick
+ * availability check across installations" fans out one network call per
+ * connection, which stops being instant well before dozens. Realistic
+ * target use (one owner's own properties, or a small manager's handful of
+ * clients) comfortably fits under 10 with room to spare. Trivial to raise
+ * later if it turns out too low - deliberately not hardcoded deeper than
+ * this one constant.
+ */
+private const val MAX_CONNECTIONS = 10
+
+/**
  * Backs the "Add CM installation" (docking) screen. One screen handles
  * both manual entry and a resolved QR/deep-link [PairingRequest] - see
  * bridge/PairingDeepLink.kt for why there is only one code path.
@@ -33,6 +47,10 @@ class DockViewModel(private val store: ConnectionStore) : ViewModel() {
         private set
 
     fun pair(request: PairingRequest, displayName: String, deviceLabel: String) {
+        if (connections.size >= MAX_CONNECTIONS) {
+            errorMessage = "Max $MAX_CONNECTIONS installations - forget one on the Connection tab before adding another."
+            return
+        }
         isPairing = true
         errorMessage = null
         viewModelScope.launch {
@@ -95,6 +113,10 @@ class DockViewModel(private val store: ConnectionStore) : ViewModel() {
      */
     fun useTestConnection(bridgeUrl: String, installationId: String, deviceToken: String, deviceLabel: String) {
         if (bridgeUrl.isBlank() || installationId.isBlank() || deviceToken.isBlank()) return
+        if (connections.size >= MAX_CONNECTIONS) {
+            errorMessage = "Max $MAX_CONNECTIONS installations - forget one on the Connection tab before adding another."
+            return
+        }
         store.upsert(
             InstallationConnection(
                 id = UUID.randomUUID().toString(),
