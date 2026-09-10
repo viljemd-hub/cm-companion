@@ -10,6 +10,12 @@ import org.json.JSONObject
  */
 data class TodayDashboard(
     val date: String,
+    // "free" | "plus" | "pro" - the paired installation's own product
+    // tier (cm_get_product_tier() server-side), used to adapt Companion's
+    // own UI (Plus-tier action menu, tier badge). Defaults to "free" if a
+    // server predates this field, which is the safe/least-surprising
+    // fallback (hides Plus-only UI rather than showing it speculatively).
+    val tier: String,
     val totals: TodayTotals,
     val units: List<TodayUnit>,
 )
@@ -58,7 +64,12 @@ fun parseTodayDashboard(json: JSONObject): TodayDashboard {
         )
     }
 
-    return TodayDashboard(date = json.getString("date"), totals = totals, units = units)
+    return TodayDashboard(
+        date = json.getString("date"),
+        tier = json.optString("tier", "free"),
+        totals = totals,
+        units = units,
+    )
 }
 
 private fun parseStayList(array: org.json.JSONArray): List<TodayStay> =

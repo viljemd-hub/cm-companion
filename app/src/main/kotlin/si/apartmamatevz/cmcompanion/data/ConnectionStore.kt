@@ -43,10 +43,22 @@ class ConnectionStore(context: Context) {
         save(list().filterNot { it.id == id })
     }
 
+    /**
+     * commit(), not apply() - a real crash (2026-09-10, reproduced live:
+     * pair a 3rd installation, tap something else, process dies from
+     * unrelated host memory pressure) showed a freshly-paired connection
+     * vanishing on next launch. apply() queues the write and returns
+     * immediately; if the process dies before that background write
+     * lands, the pairing that already succeeded and rendered in the UI
+     * is silently lost. commit() blocks until the write is actually on
+     * disk - callers must call this off the main thread (see
+     * DockViewModel, which wraps every upsert()/remove() in
+     * Dispatchers.IO for exactly this reason).
+     */
     private fun save(connections: List<InstallationConnection>) {
         val array = JSONArray()
         connections.forEach { array.put(it.toJson()) }
-        prefs.edit().putString(KEY_CONNECTIONS, array.toString()).apply()
+        prefs.edit().putString(KEY_CONNECTIONS, array.toString()).commit()
     }
 
     companion object {

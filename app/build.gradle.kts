@@ -95,6 +95,13 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    // Chrome Custom Tabs (2026-09-10) - opening the admin panel via a
+    // plain Intent.ACTION_VIEW launched a full separate browser task,
+    // and a real user report found "no way back" to Companion from
+    // there (system Back/Recents work, but nothing in the UI itself
+    // suggests it). Custom Tabs stays visually branded as a tab but
+    // keeps a clear back arrow that returns straight to the calling app.
+    implementation("androidx.browser:browser:1.8.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.json:json:20240303")
 

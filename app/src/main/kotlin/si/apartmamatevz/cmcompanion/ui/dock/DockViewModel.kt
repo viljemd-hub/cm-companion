@@ -55,26 +55,30 @@ class DockViewModel(private val store: ConnectionStore) : ViewModel() {
         errorMessage = null
         viewModelScope.launch {
             try {
-                // BridgeClient/PairingExchange do blocking OkHttp calls -
-                // Android forbids network I/O on the main thread
-                // (NetworkOnMainThreadException), so this must run on IO.
-                val result = withContext(Dispatchers.IO) {
-                    PairingExchange().exchange(request, deviceLabel)
+                // Network call AND the store write both happen inside this
+                // one Dispatchers.IO block, then the already-computed list
+                // is assigned on Main - store.upsert() now does a
+                // synchronous, encrypted commit() (see ConnectionStore),
+                // so it must never run on the main thread, same reasoning
+                // as the network call it sits next to.
+                val updated = withContext(Dispatchers.IO) {
+                    val result = PairingExchange().exchange(request, deviceLabel)
+                    store.upsert(
+                        InstallationConnection(
+                            id = UUID.randomUUID().toString(),
+                            installationId = request.installationId,
+                            baseUrl = request.bridgeBaseUrl,
+                            deviceToken = result.deviceToken,
+                            displayName = displayName,
+                            createdAt = System.currentTimeMillis(),
+                            lastConnectedAt = System.currentTimeMillis(),
+                            status = ConnectionStatus.ACTIVE,
+                            scopes = result.scopes,
+                        ),
+                    )
+                    store.list()
                 }
-                store.upsert(
-                    InstallationConnection(
-                        id = UUID.randomUUID().toString(),
-                        installationId = request.installationId,
-                        baseUrl = request.bridgeBaseUrl,
-                        deviceToken = result.deviceToken,
-                        displayName = displayName,
-                        createdAt = System.currentTimeMillis(),
-                        lastConnectedAt = System.currentTimeMillis(),
-                        status = ConnectionStatus.ACTIVE,
-                        scopes = result.scopes,
-                    ),
-                )
-                connections = store.list()
+                connections = updated
             } catch (e: Exception) {
                 errorMessage = describeError(e)
             } finally {
@@ -117,20 +121,25 @@ class DockViewModel(private val store: ConnectionStore) : ViewModel() {
             errorMessage = "Max $MAX_CONNECTIONS installations - forget one on the Connection tab before adding another."
             return
         }
-        store.upsert(
-            InstallationConnection(
-                id = UUID.randomUUID().toString(),
-                installationId = installationId,
-                baseUrl = bridgeUrl,
-                deviceToken = deviceToken,
-                displayName = deviceLabel.ifBlank { "Test connection" },
-                createdAt = System.currentTimeMillis(),
-                lastConnectedAt = System.currentTimeMillis(),
-                status = ConnectionStatus.ACTIVE,
-                scopes = listOf("dashboard.today", "dashboard.alerts", "dashboard.inquiries", "action.inquiry_respond"),
-            ),
-        )
-        connections = store.list()
+        viewModelScope.launch {
+            val updated = withContext(Dispatchers.IO) {
+                store.upsert(
+                    InstallationConnection(
+                        id = UUID.randomUUID().toString(),
+                        installationId = installationId,
+                        baseUrl = bridgeUrl,
+                        deviceToken = deviceToken,
+                        displayName = deviceLabel.ifBlank { "Test connection" },
+                        createdAt = System.currentTimeMillis(),
+                        lastConnectedAt = System.currentTimeMillis(),
+                        status = ConnectionStatus.ACTIVE,
+                        scopes = listOf("dashboard.today", "dashboard.alerts", "dashboard.inquiries", "action.inquiry_respond"),
+                    ),
+                )
+                store.list()
+            }
+            connections = updated
+        }
     }
 
     /**
@@ -144,13 +153,12 @@ class DockViewModel(private val store: ConnectionStore) : ViewModel() {
      */
     fun forget(connection: InstallationConnection) {
         viewModelScope.launch {
-            runCatching {
-                withContext(Dispatchers.IO) {
-                    BridgeClient(connection).post("pairing/unpair.php", JSONObject())
-                }
+            val updated = withContext(Dispatchers.IO) {
+                runCatching { BridgeClient(connection).post("pairing/unpair.php", JSONObject()) }
+                store.remove(connection.id)
+                store.list()
             }
-            store.remove(connection.id)
-            connections = store.list()
+            connections = updated
         }
     }
 
@@ -161,7 +169,12 @@ class DockViewModel(private val store: ConnectionStore) : ViewModel() {
      * the CM installation itself needs to know about.
      */
     fun setContinueUrl(connection: InstallationConnection, url: String) {
-        store.upsert(connection.copy(continueUrl = url.trim().ifBlank { null }))
-        connections = store.list()
+        viewModelScope.launch {
+            val updated = withContext(Dispatchers.IO) {
+                store.upsert(connection.copy(continueUrl = url.trim().ifBlank { null }))
+                store.list()
+            }
+            connections = updated
+        }
     }
 }
