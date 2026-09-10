@@ -68,6 +68,9 @@ import si.apartmamatevz.cmcompanion.ui.today.TodayViewModel
  * one paired installation the switcher is barely noticeable, with several
  * it's a plain dropdown - no account-management screen in v0.1.
  */
+/** Default when a connection's [InstallationConnection.continueUrlPath] is unset. */
+private const val DEFAULT_CONTINUE_URL_PATH = "admin/admin_calendar.php"
+
 enum class CompanionTab(val label: String) {
     TODAY("Today"),
     ALERTS("Alerts"),
@@ -122,6 +125,18 @@ fun CompanionShell(dockViewModel: DockViewModel) {
     }
 
     val topBarContext = LocalContext.current
+    var editingContinueUrlFor by remember { mutableStateOf<InstallationConnection?>(null) }
+
+    editingContinueUrlFor?.let { connection ->
+        EditContinueUrlDialog(
+            connection = connection,
+            onDismiss = { editingContinueUrlFor = null },
+            onSave = { path ->
+                dockViewModel.setContinueUrlPath(connection, path)
+                editingContinueUrlFor = null
+            },
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -131,14 +146,16 @@ fun CompanionShell(dockViewModel: DockViewModel) {
                     CmLogoBadge(
                         onOpenAdmin = {
                             val connection = selected ?: return@CmLogoBadge
-                            val url = "${connection.baseUrl.trimEnd('/')}/admin/admin_calendar.php"
+                            val path = connection.continueUrlPath?.trim('/')?.ifBlank { null }
+                                ?: DEFAULT_CONTINUE_URL_PATH
+                            val url = "${connection.baseUrl.trimEnd('/')}/$path"
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                             runCatching { topBarContext.startActivity(intent) }
                                 .onFailure {
                                     Toast.makeText(topBarContext, "No browser available", Toast.LENGTH_SHORT).show()
                                 }
                         },
-                        onOpenSettings = { tab = CompanionTab.CONNECTION },
+                        onOpenSettings = { editingContinueUrlFor = selected },
                     )
                 },
             )
@@ -229,12 +246,55 @@ fun CompanionShell(dockViewModel: DockViewModel) {
 }
 
 /**
+ * Long-pressing the logo edits WHICH page short-tap opens for this one
+ * connection - not a generic settings screen, since the whole point is a
+ * fast one-tap jump to whatever page this owner actually works from
+ * (calendar, a specific unit, manage_reservations.php, ...), which
+ * differs per installation and per owner's habits.
+ */
+@Composable
+private fun EditContinueUrlDialog(
+    connection: InstallationConnection,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit,
+) {
+    var path by remember(connection.id) {
+        mutableStateOf(connection.continueUrlPath ?: DEFAULT_CONTINUE_URL_PATH)
+    }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Main installation link") },
+        text = {
+            Column {
+                Text(
+                    "Path opened when you tap the logo, relative to ${connection.baseUrl.trimEnd('/')}/",
+                    color = CmColors.TextMuted,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                androidx.compose.material3.OutlinedTextField(
+                    value = path,
+                    onValueChange = { path = it },
+                    placeholder = { Text(DEFAULT_CONTINUE_URL_PATH) },
+                    singleLine = true,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = { onSave(path) }) { Text("Save") }
+        },
+        dismissButton = {
+            androidx.compose.material3.TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
+}
+
+/**
  * The CM house logo in the app bar - previously this space was just
  * empty, making the bar feel unfinished. Short tap jumps straight to the
- * active connection's own admin calendar in the system browser (fastest
+ * page set in [EditContinueUrlDialog] for the active connection (fastest
  * path to "continue working on that installation's actual web UI");
- * long press opens Connection settings instead, so the logo doubles as
- * a settings entry point without needing a separate icon for it.
+ * long press opens that same dialog to change it.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

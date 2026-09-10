@@ -153,4 +153,15 @@ class DockViewModel(private val store: ConnectionStore) : ViewModel() {
             connections = store.list()
         }
     }
+
+    /**
+     * The app-bar logo's long-press ("edit the main installation link")
+     * writes here - local-only, no server call, since this is purely
+     * "which page does short-tap jump to" for this device, not something
+     * the CM installation itself needs to know about.
+     */
+    fun setContinueUrlPath(connection: InstallationConnection, path: String) {
+        store.upsert(connection.copy(continueUrlPath = path.trim().ifBlank { null }))
+        connections = store.list()
+    }
 }
