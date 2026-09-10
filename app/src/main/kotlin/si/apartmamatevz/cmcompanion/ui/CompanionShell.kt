@@ -312,7 +312,8 @@ private fun CmLogoBadge(onOpenAdmin: () -> Unit, onOpenSettings: () -> Unit) {
         Text(
             "CM-Companion",
             color = MaterialTheme.colorScheme.onSurface,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
             // Tight to the icon, not spread across the bar - this label
             // exists to explain the icon, not to act as a second title.
             modifier = Modifier.padding(end = 6.dp),
