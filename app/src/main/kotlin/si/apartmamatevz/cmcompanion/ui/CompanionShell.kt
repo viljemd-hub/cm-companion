@@ -275,6 +275,7 @@ fun CompanionShell(dockViewModel: DockViewModel) {
                     connections = connections,
                     onAddAnother = { showAddInstallation = true },
                     onForget = { connection -> dockViewModel.forget(connection) },
+                    onRename = { connection, newName -> dockViewModel.renameConnection(connection, newName) },
                 )
                 CompanionTab.ALERTS -> AlertsScreen(
                     connections = connections,

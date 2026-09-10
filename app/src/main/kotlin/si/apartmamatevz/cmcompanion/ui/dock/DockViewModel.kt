@@ -139,4 +139,26 @@ class DockViewModel(private val store: ConnectionStore) : ViewModel() {
             connections = updated
         }
     }
+
+    /**
+     * "Rename" (Connection screen, 2026-09-10) - a pairing's default
+     * displayName is often the raw installation_id UUID (QR scans and
+     * tapped deep links skip the manual-entry Name field entirely), which
+     * is correct but not something a real owner wants staring at them in
+     * the switcher forever. Local-only, no server call - same reasoning
+     * as setContinueUrl(): purely how this device labels the connection.
+     * Blank input is ignored rather than allowed, since an empty
+     * displayName would leave the switcher/Connection list unreadable.
+     */
+    fun renameConnection(connection: InstallationConnection, newName: String) {
+        val trimmed = newName.trim()
+        if (trimmed.isBlank()) return
+        viewModelScope.launch {
+            val updated = withContext(Dispatchers.IO) {
+                store.upsert(connection.copy(displayName = trimmed))
+                store.list()
+            }
+            connections = updated
+        }
+    }
 }
