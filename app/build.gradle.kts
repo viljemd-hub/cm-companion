@@ -35,7 +35,7 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = gitCommitCount
-        versionName = "0.2.3"
+        versionName = "0.3.0"
     }
 
     buildTypes {
@@ -83,6 +83,13 @@ dependencies {
     // suggests it). Custom Tabs stays visually branded as a tab but
     // keeps a clear back arrow that returns straight to the calling app.
     implementation("androidx.browser:browser:1.8.0")
+    // QR pairing scanner (2026-09-10) - the deep link/QR *protocol* has
+    // been locked in since v0.1 (bridge/PairingDeepLink.kt), but nothing
+    // could actually scan a QR code yet, only tap a rendered link. Uses
+    // zxing-android-embedded's ready-made scan Activity + ActivityResult
+    // contract rather than hand-rolling a CameraX preview - a QR scanner
+    // is a solved, boring problem, not something worth a custom UI here.
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.json:json:20240303")
 

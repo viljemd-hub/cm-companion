@@ -2,6 +2,7 @@ package si.apartmamatevz.cmcompanion.ui.dock
 
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -28,8 +31,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 import si.apartmamatevz.cmcompanion.R
 import si.apartmamatevz.cmcompanion.bridge.PairingRequest
+import si.apartmamatevz.cmcompanion.bridge.parsePairingDeepLink
 import si.apartmamatevz.cmcompanion.ui.theme.CmColors
 
 /**
@@ -43,8 +49,9 @@ private val PAIRING_CODE_PATTERN = Regex("^[0-9A-F]{4}-[0-9A-F]{4}$")
 
 /**
  * Manual-entry docking screen: base URL + installation id + one-time code.
- * A future QR scanner screen resolves to the same [PairingRequest] and
- * calls [onPair] with it - see bridge/PairingDeepLink.kt.
+ * The QR scanner button resolves to the exact same [PairingRequest] and
+ * calls [onPair] with it - see bridge/PairingDeepLink.kt - so scanning
+ * and typing can never quietly drift apart into two implementations.
  */
 @Composable
 fun DockScreen(
@@ -58,6 +65,18 @@ fun DockScreen(
     val installationId = remember { mutableStateOf("") }
     val code = remember { mutableStateOf("") }
     val displayName = remember { mutableStateOf("") }
+    var scanError by remember { mutableStateOf<String?>(null) }
+
+    val scanLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
+        val contents = result.contents ?: return@rememberLauncherForActivityResult
+        val request = runCatching { parsePairingDeepLink(Uri.parse(contents)) }.getOrNull()
+        if (request == null) {
+            scanError = "That QR code isn't a CM Companion pairing link."
+        } else {
+            scanError = null
+            onPair(request, displayName.value.trim().ifBlank { request.installationId })
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -82,9 +101,25 @@ fun DockScreen(
         }
         Text("Add CM installation", style = MaterialTheme.typography.titleMedium, color = CmColors.TextPrimary)
         Text(
-            "Generate a pairing code from the CM admin panel, then enter it here.",
+            "Generate a pairing code from the CM admin panel, then enter it here or scan its QR code.",
             color = CmColors.TextMuted,
         )
+
+        Button(
+            onClick = {
+                scanLauncher.launch(
+                    ScanOptions()
+                        .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                        .setPrompt("Scan the pairing QR code from your CM admin panel")
+                        .setBeepEnabled(false)
+                        .setOrientationLocked(false),
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Scan QR code")
+        }
+        scanError?.let { Text(it, color = CmColors.Danger) }
 
         OutlinedTextField(
             value = displayName.value,
