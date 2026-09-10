@@ -4,4 +4,8 @@
          android:windowBackground (themes.xml) is a plain XML theme
          attribute, resolved before Compose ever runs. -->
     <color name="cm_background">#FF0B1220</color>
+    <!-- Adaptive icon background - white, not cm_background, so the
+         logo's black outline stays legible regardless of launcher mask
+         shape (the logo art itself already contains all its own color). -->
+    <color name="ic_launcher_background">#FFFFFFFF</color>
 </resources>

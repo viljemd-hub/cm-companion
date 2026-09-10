@@ -1,7 +1,16 @@
 package si.apartmamatevz.cmcompanion.ui
 
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
@@ -11,11 +20,11 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,11 +32,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import si.apartmamatevz.cmcompanion.BuildConfig
+import si.apartmamatevz.cmcompanion.R
 import si.apartmamatevz.cmcompanion.bridge.AttentionKind
 import si.apartmamatevz.cmcompanion.data.InstallationConnection
 import si.apartmamatevz.cmcompanion.data.SeenInquiriesStore
@@ -38,6 +53,7 @@ import si.apartmamatevz.cmcompanion.ui.dock.DockScreen
 import si.apartmamatevz.cmcompanion.ui.dock.DockViewModel
 import si.apartmamatevz.cmcompanion.ui.inquiries.InquiriesScreen
 import si.apartmamatevz.cmcompanion.ui.inquiries.InquiriesViewModel
+import si.apartmamatevz.cmcompanion.ui.theme.CmColors
 import si.apartmamatevz.cmcompanion.ui.today.TodayScreen
 import si.apartmamatevz.cmcompanion.ui.today.TodayViewModel
 
@@ -104,8 +120,28 @@ fun CompanionShell(dockViewModel: DockViewModel) {
         return
     }
 
+    val topBarContext = LocalContext.current
+
     Scaffold(
-        topBar = { TopAppBar(title = { InstallationSwitcher(connections, selected) { selected = it } }) },
+        topBar = {
+            TopAppBar(
+                title = { InstallationSwitcher(connections, selected) { selected = it } },
+                actions = {
+                    CmLogoBadge(
+                        onOpenAdmin = {
+                            val connection = selected ?: return@CmLogoBadge
+                            val url = "${connection.baseUrl.trimEnd('/')}/admin/admin_calendar.php"
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                            runCatching { topBarContext.startActivity(intent) }
+                                .onFailure {
+                                    Toast.makeText(topBarContext, "No browser available", Toast.LENGTH_SHORT).show()
+                                }
+                        },
+                        onOpenSettings = { tab = CompanionTab.CONNECTION },
+                    )
+                },
+            )
+        },
         bottomBar = {
             NavigationBar {
                 CompanionTab.entries.forEach { candidate ->
@@ -191,6 +227,35 @@ fun CompanionShell(dockViewModel: DockViewModel) {
     }
 }
 
+/**
+ * The CM house logo in the app bar - previously this space was just
+ * empty, making the bar feel unfinished. Short tap jumps straight to the
+ * active connection's own admin calendar in the system browser (fastest
+ * path to "continue working on that installation's actual web UI");
+ * long press opens Connection settings instead, so the logo doubles as
+ * a settings entry point without needing a separate icon for it.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun CmLogoBadge(onOpenAdmin: () -> Unit, onOpenSettings: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .padding(end = 12.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .combinedClickable(onClick = onOpenAdmin, onLongClick = onOpenSettings),
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.cm_logo),
+            contentDescription = "CM Companion",
+            tint = androidx.compose.ui.graphics.Color.Unspecified,
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .size(28.dp),
+        )
+    }
+}
+
 @Composable
 private fun InstallationSwitcher(
     connections: List<InstallationConnection>,
@@ -198,7 +263,18 @@ private fun InstallationSwitcher(
     onSelect: (InstallationConnection) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    TextButton(onClick = { expanded = true }) {
+    androidx.compose.material3.OutlinedButton(
+        onClick = { expanded = true },
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, CmColors.Border),
+        colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        // Small raised shadow on top of the border - the plain flat
+        // TextButton this replaced looked like inert text, not something
+        // tappable; the combination reads as a real, pressable 3D button.
+        modifier = Modifier.shadow(elevation = 3.dp, shape = RoundedCornerShape(12.dp)),
+    ) {
         Text(selected?.displayName ?: "CM Companion")
     }
     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Adaptive icon foreground: the CM house logo, inset from the 108dp
+     canvas so it stays inside the ~66dp safe zone launchers use for
+     circle/squircle/rounded-square masking. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_launcher_foreground_art"
+    android:insetLeft="21%"
+    android:insetTop="21%"
+    android:insetRight="21%"
+    android:insetBottom="21%" />

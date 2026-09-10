@@ -48,7 +48,7 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = gitCommitCount
-        versionName = "0.1.0"
+        versionName = "0.2.0"
 
         buildConfigField("String", "DEV_BRIDGE_URL", "\"${devSecret("DEV_BRIDGE_URL")}\"")
         buildConfigField("String", "DEV_INSTALLATION_ID", "\"${devSecret("DEV_INSTALLATION_ID")}\"")

@@ -1,9 +1,15 @@
 package si.apartmamatevz.cmcompanion.ui.dock
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -13,11 +19,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import si.apartmamatevz.cmcompanion.BuildConfig
+import si.apartmamatevz.cmcompanion.R
 import si.apartmamatevz.cmcompanion.bridge.PairingRequest
 import si.apartmamatevz.cmcompanion.data.isOnWifi
 import si.apartmamatevz.cmcompanion.ui.theme.CmColors
@@ -56,12 +66,20 @@ fun DockScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(
-            "CM Companion",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = CmColors.Accent,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Image(
+                painter = painterResource(R.drawable.cm_logo),
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+            )
+            Text(
+                "CM Companion",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = CmColors.Accent,
+                modifier = Modifier.padding(start = 10.dp),
+            )
+        }
         Text("Add CM installation", style = MaterialTheme.typography.titleMedium, color = CmColors.TextPrimary)
         Text(
             "Generate a pairing code from the CM admin panel, then enter it here.",
@@ -155,5 +173,28 @@ fun DockScreen(
                 Text("Cancel")
             }
         }
+
+        // Anyone landing here without their own CM yet (e.g. shown this
+        // screen before ever generating a pairing code) needs a way
+        // forward that isn't a dead end - CM Free's own downloads page
+        // covers both "get CM Free" and "where do I generate a code".
+        val linkContext = LocalContext.current
+        Text(
+            "Don't have CM yet? Get CM Free and pair from Admin → CM Companion.",
+            color = CmColors.TextMuted,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        Text(
+            "apartmamatevz.si/cmfree/download.html",
+            color = CmColors.Accent,
+            textDecoration = TextDecoration.Underline,
+            modifier = Modifier.clickable {
+                val intent = Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("https://apartmamatevz.si/cmfree/download.html"),
+                )
+                runCatching { linkContext.startActivity(intent) }
+            },
+        )
     }
 }
