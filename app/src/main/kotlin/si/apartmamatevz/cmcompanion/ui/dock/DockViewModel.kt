@@ -160,8 +160,8 @@ class DockViewModel(private val store: ConnectionStore) : ViewModel() {
      * "which page does short-tap jump to" for this device, not something
      * the CM installation itself needs to know about.
      */
-    fun setContinueUrlPath(connection: InstallationConnection, path: String) {
-        store.upsert(connection.copy(continueUrlPath = path.trim().ifBlank { null }))
+    fun setContinueUrl(connection: InstallationConnection, url: String) {
+        store.upsert(connection.copy(continueUrl = url.trim().ifBlank { null }))
         connections = store.list()
     }
 }

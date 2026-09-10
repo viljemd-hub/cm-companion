@@ -65,7 +65,7 @@ private fun InstallationConnection.toJson(): JSONObject = JSONObject().apply {
     put("lastConnectedAt", lastConnectedAt)
     put("status", status.name)
     put("scopes", JSONArray(scopes))
-    put("continueUrlPath", continueUrlPath)
+    put("continueUrl", continueUrl)
 }
 
 private fun JSONObject.toConnection(): InstallationConnection {
@@ -80,10 +80,11 @@ private fun JSONObject.toConnection(): InstallationConnection {
         lastConnectedAt = if (isNull("lastConnectedAt")) null else getLong("lastConnectedAt"),
         status = ConnectionStatus.valueOf(getString("status")),
         scopes = (0 until scopesArray.length()).map { scopesArray.getString(it) },
-        // optString + null-if-missing, not getString - reads from
-        // before this field existed shouldn't crash on a missing key.
-        continueUrlPath = if (has("continueUrlPath") && !isNull("continueUrlPath")) {
-            getString("continueUrlPath")
+        // null-if-missing, not getString - reads from before this field
+        // existed (or its earlier "continueUrlPath" name) shouldn't crash
+        // on a missing key.
+        continueUrl = if (has("continueUrl") && !isNull("continueUrl")) {
+            getString("continueUrl")
         } else {
             null
         },

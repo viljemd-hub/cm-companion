@@ -21,12 +21,15 @@ data class InstallationConnection(
     val lastConnectedAt: Long?,
     val status: ConnectionStatus,
     val scopes: List<String>,
-    // User-editable path (relative to baseUrl) the app-bar logo's short
-    // tap opens in the system browser - "continue working on this
-    // installation's actual web UI". Null means not customized yet, so
-    // callers fall back to admin/admin_calendar.php rather than storing
-    // that default in every existing connection.
-    val continueUrlPath: String? = null,
+    // Full URL the app-bar logo's short tap opens in the system browser -
+    // "continue working on this installation's actual web UI". Null means
+    // not customized yet; callers derive a default straight from baseUrl
+    // (see CompanionShell.defaultContinueUrl()) rather than storing that
+    // default in every existing connection. Deliberately a full URL, not
+    // a path fragment relative to baseUrl - editing the actual real URL
+    // is clearer than a bare relative string the user has to trust
+    // concatenates correctly.
+    val continueUrl: String? = null,
 )
 
 enum class ConnectionStatus {

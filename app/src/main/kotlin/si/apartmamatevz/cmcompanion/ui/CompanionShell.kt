@@ -68,8 +68,14 @@ import si.apartmamatevz.cmcompanion.ui.today.TodayViewModel
  * one paired installation the switcher is barely noticeable, with several
  * it's a plain dropdown - no account-management screen in v0.1.
  */
-/** Default when a connection's [InstallationConnection.continueUrlPath] is unset. */
-private const val DEFAULT_CONTINUE_URL_PATH = "admin/admin_calendar.php"
+/**
+ * Default when a connection's [InstallationConnection.continueUrl] is
+ * unset - derived straight from that connection's own baseUrl rather
+ * than a bare hardcoded path, so the edit dialog always starts from the
+ * real, actually-reachable URL for that specific installation.
+ */
+private fun defaultContinueUrl(connection: InstallationConnection): String =
+    "${connection.baseUrl.trimEnd('/')}/admin/admin_calendar.php"
 
 enum class CompanionTab(val label: String) {
     TODAY("Today"),
@@ -131,8 +137,8 @@ fun CompanionShell(dockViewModel: DockViewModel) {
         EditContinueUrlDialog(
             connection = connection,
             onDismiss = { editingContinueUrlFor = null },
-            onSave = { path ->
-                dockViewModel.setContinueUrlPath(connection, path)
+            onSave = { url ->
+                dockViewModel.setContinueUrl(connection, url)
                 editingContinueUrlFor = null
             },
         )
@@ -146,9 +152,7 @@ fun CompanionShell(dockViewModel: DockViewModel) {
                     CmLogoBadge(
                         onOpenAdmin = {
                             val connection = selected ?: return@CmLogoBadge
-                            val path = connection.continueUrlPath?.trim('/')?.ifBlank { null }
-                                ?: DEFAULT_CONTINUE_URL_PATH
-                            val url = "${connection.baseUrl.trimEnd('/')}/$path"
+                            val url = connection.continueUrl?.ifBlank { null } ?: defaultContinueUrl(connection)
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                             runCatching { topBarContext.startActivity(intent) }
                                 .onFailure {
@@ -258,8 +262,8 @@ private fun EditContinueUrlDialog(
     onDismiss: () -> Unit,
     onSave: (String) -> Unit,
 ) {
-    var path by remember(connection.id) {
-        mutableStateOf(connection.continueUrlPath ?: DEFAULT_CONTINUE_URL_PATH)
+    var url by remember(connection.id) {
+        mutableStateOf(connection.continueUrl ?: defaultContinueUrl(connection))
     }
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismiss,
@@ -267,21 +271,20 @@ private fun EditContinueUrlDialog(
         text = {
             Column {
                 Text(
-                    "Path opened when you tap the logo, relative to ${connection.baseUrl.trimEnd('/')}/",
+                    "Page opened when you tap the logo - defaults to this installation's own admin calendar.",
                     color = CmColors.TextMuted,
                     style = MaterialTheme.typography.bodySmall,
                 )
                 androidx.compose.material3.OutlinedTextField(
-                    value = path,
-                    onValueChange = { path = it },
-                    placeholder = { Text(DEFAULT_CONTINUE_URL_PATH) },
+                    value = url,
+                    onValueChange = { url = it },
                     singleLine = true,
                     modifier = Modifier.padding(top = 8.dp),
                 )
             }
         },
         confirmButton = {
-            androidx.compose.material3.TextButton(onClick = { onSave(path) }) { Text("Save") }
+            androidx.compose.material3.TextButton(onClick = { onSave(url) }) { Text("Save") }
         },
         dismissButton = {
             androidx.compose.material3.TextButton(onClick = onDismiss) { Text("Cancel") }
