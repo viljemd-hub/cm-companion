@@ -5,6 +5,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -243,6 +244,11 @@ private fun CmLogoBadge(onOpenAdmin: () -> Unit, onOpenSettings: () -> Unit) {
         modifier = Modifier
             .padding(end = 12.dp)
             .clip(RoundedCornerShape(10.dp))
+            // White backing plate, same reasoning as the launcher icon's
+            // adaptive background - the logo's black outline/white fill
+            // was made for a light background, and read as "peeking
+            // through" the dark app bar without one.
+            .background(androidx.compose.ui.graphics.Color.White)
             .combinedClickable(onClick = onOpenAdmin, onLongClick = onOpenSettings),
     ) {
         Icon(
@@ -250,7 +256,7 @@ private fun CmLogoBadge(onOpenAdmin: () -> Unit, onOpenSettings: () -> Unit) {
             contentDescription = "CM Companion",
             tint = androidx.compose.ui.graphics.Color.Unspecified,
             modifier = Modifier
-                .padding(horizontal = 8.dp)
+                .padding(6.dp)
                 .size(28.dp),
         )
     }
