@@ -52,7 +52,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import si.apartmamatevz.cmcompanion.BuildConfig
 import si.apartmamatevz.cmcompanion.R
 import si.apartmamatevz.cmcompanion.bridge.AttentionKind
 import si.apartmamatevz.cmcompanion.bridge.AvailabilityQuery
@@ -143,14 +142,6 @@ fun CompanionShell(dockViewModel: DockViewModel) {
             isPairing = dockViewModel.isPairing,
             errorMessage = dockViewModel.errorMessage,
             onPair = { request, name -> dockViewModel.pair(request, name, deviceLabel = "Android") },
-            onTestConnection = {
-                dockViewModel.useTestConnection(
-                    bridgeUrl = BuildConfig.DEV_BRIDGE_URL,
-                    installationId = BuildConfig.DEV_INSTALLATION_ID,
-                    deviceToken = BuildConfig.DEV_DEVICE_TOKEN,
-                    deviceLabel = BuildConfig.DEV_DEVICE_LABEL,
-                )
-            },
             showCancel = selected != null,
             onCancel = { showAddInstallation = false },
         )

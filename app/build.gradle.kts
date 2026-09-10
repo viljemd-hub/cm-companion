@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -28,17 +26,6 @@ val gitCommitCount: Int = try {
     1
 }
 
-// Local-only debug "Test connection" shortcut (see DockScreen.kt) - reads
-// app/dev.secrets.properties (git-ignored, see the .example file next to
-// it). Absent by default: a fresh clone builds fine with all four fields
-// empty, and the button simply doesn't appear. Never read from anywhere
-// that would let these values leak into a committed file.
-val devSecrets = Properties().apply {
-    val file = rootProject.file("app/dev.secrets.properties")
-    if (file.exists()) file.inputStream().use { load(it) }
-}
-fun devSecret(key: String): String = devSecrets.getProperty(key, "")
-
 android {
     namespace = "si.apartmamatevz.cmcompanion"
     compileSdk = 34
@@ -48,12 +35,7 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = gitCommitCount
-        versionName = "0.2.2"
-
-        buildConfigField("String", "DEV_BRIDGE_URL", "\"${devSecret("DEV_BRIDGE_URL")}\"")
-        buildConfigField("String", "DEV_INSTALLATION_ID", "\"${devSecret("DEV_INSTALLATION_ID")}\"")
-        buildConfigField("String", "DEV_DEVICE_TOKEN", "\"${devSecret("DEV_DEVICE_TOKEN")}\"")
-        buildConfigField("String", "DEV_DEVICE_LABEL", "\"${devSecret("DEV_DEVICE_LABEL")}\"")
+        versionName = "0.2.3"
     }
 
     buildTypes {
@@ -64,7 +46,6 @@ android {
 
     buildFeatures {
         compose = true
-        buildConfig = true
     }
 
     composeOptions {

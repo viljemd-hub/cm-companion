@@ -28,10 +28,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import si.apartmamatevz.cmcompanion.BuildConfig
 import si.apartmamatevz.cmcompanion.R
 import si.apartmamatevz.cmcompanion.bridge.PairingRequest
-import si.apartmamatevz.cmcompanion.data.isOnWifi
 import si.apartmamatevz.cmcompanion.ui.theme.CmColors
 
 /**
@@ -53,7 +51,6 @@ fun DockScreen(
     isPairing: Boolean,
     errorMessage: String?,
     onPair: (PairingRequest, displayName: String) -> Unit,
-    onTestConnection: () -> Unit = {},
     showCancel: Boolean = false,
     onCancel: () -> Unit = {},
 ) {
@@ -150,21 +147,6 @@ fun DockScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Pair")
-            }
-        }
-
-        // Debug-build-only shortcut (2026-09-03), backed by
-        // app/dev.secrets.properties - see DockViewModel.useTestConnection()
-        // and build.gradle.kts. Absent (button doesn't render) unless that
-        // local, git-ignored file was present at build time - a fresh
-        // clone of this public repo never shows it. Also gated to WiFi
-        // ("če je v lokalnem omrežju, naj bo vidno sicer ne") - a shared
-        // family debug APK's embedded token shouldn't be one tap away from
-        // anywhere on mobile data.
-        val context = LocalContext.current
-        if (BuildConfig.DEV_DEVICE_TOKEN.isNotBlank() && isOnWifi(context)) {
-            OutlinedButton(onClick = onTestConnection, modifier = Modifier.fillMaxWidth()) {
-                Text("Test connection (${BuildConfig.DEV_DEVICE_LABEL.ifBlank { "debug" }})")
             }
         }
 
