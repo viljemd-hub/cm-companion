@@ -307,21 +307,35 @@ private fun CmLogoBadge(onOpenAdmin: () -> Unit, onOpenSettings: () -> Unit) {
         modifier = Modifier
             .padding(end = 12.dp)
             .clip(RoundedCornerShape(10.dp))
-            // White backing plate, same reasoning as the launcher icon's
-            // adaptive background - the logo's black outline/white fill
-            // was made for a light background, and read as "peeking
-            // through" the dark app bar without one.
-            .background(androidx.compose.ui.graphics.Color.White)
             .combinedClickable(onClick = onOpenAdmin, onLongClick = onOpenSettings),
     ) {
-        Icon(
-            painter = painterResource(R.drawable.cm_logo),
-            contentDescription = "CM Companion",
-            tint = androidx.compose.ui.graphics.Color.Unspecified,
-            modifier = Modifier
-                .padding(6.dp)
-                .size(28.dp),
+        Text(
+            "CM-Companion",
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.labelLarge,
+            // Tight to the icon, not spread across the bar - this label
+            // exists to explain the icon, not to act as a second title.
+            modifier = Modifier.padding(end = 6.dp),
         )
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(10.dp))
+                // White backing plate, same reasoning as the launcher
+                // icon's adaptive background - the logo's black
+                // outline/white fill was made for a light background,
+                // and read as "peeking through" the dark app bar
+                // without one.
+                .background(androidx.compose.ui.graphics.Color.White),
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.cm_logo),
+                contentDescription = "CM Companion",
+                tint = androidx.compose.ui.graphics.Color.Unspecified,
+                modifier = Modifier
+                    .padding(6.dp)
+                    .size(28.dp),
+            )
+        }
     }
 }
 
