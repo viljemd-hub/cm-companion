@@ -438,6 +438,11 @@ private fun AvailabilityQueryDialog(connection: InstallationConnection?, onDismi
                     // admin over - a blocked one has nothing to act on
                     // here, the host already knows it's taken.
                     if (r.available && connection != null && queriedFrom != null && queriedTo != null) {
+                        val siteRoot = connection.baseUrl.trimEnd('/')
+                            .removeSuffix("/admin/api/bridge/v1")
+                        val calendarUrl = "$siteRoot/admin/admin_calendar.php" +
+                            "?unit=${Uri.encode(r.unit)}" +
+                            "&focus_from=${queriedFrom}&focus_to=${queriedTo}"
                         Text(
                             "Open ${r.unit} in admin calendar →",
                             color = CmColors.Accent,
@@ -446,15 +451,32 @@ private fun AvailabilityQueryDialog(connection: InstallationConnection?, onDismi
                             modifier = Modifier
                                 .padding(start = 12.dp, top = 2.dp)
                                 .clickable {
-                                    val siteRoot = connection.baseUrl.trimEnd('/')
-                                        .removeSuffix("/admin/api/bridge/v1")
-                                    val url = "$siteRoot/admin/admin_calendar.php" +
-                                        "?unit=${Uri.encode(r.unit)}" +
-                                        "&focus_from=${queriedFrom}&focus_to=${queriedTo}"
                                     runCatching {
                                         androidx.browser.customtabs.CustomTabsIntent.Builder()
                                             .build()
-                                            .launchUrl(resultsContext, Uri.parse(url))
+                                            .launchUrl(resultsContext, Uri.parse(calendarUrl))
+                                    }
+                                },
+                        )
+                        // Same deep link, plus quick_reserve=1 (2026-09-11 server-side
+                        // addition to admin_calendar.js) - the range is already known
+                        // free from this very query, so the web page can go straight to
+                        // its own existing hard/soft admin-reserve prompt instead of
+                        // just highlighting the dates. No reservation logic here or on
+                        // the server duplicates what admin_reserve.php/admin_reserve_soft.php
+                        // already do - this is only a deep-link parameter.
+                        Text(
+                            "Book ${r.unit} for this period →",
+                            color = CmColors.Accent,
+                            style = MaterialTheme.typography.bodySmall,
+                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
+                            modifier = Modifier
+                                .padding(start = 12.dp, top = 2.dp)
+                                .clickable {
+                                    runCatching {
+                                        androidx.browser.customtabs.CustomTabsIntent.Builder()
+                                            .build()
+                                            .launchUrl(resultsContext, Uri.parse("$calendarUrl&quick_reserve=1"))
                                     }
                                 },
                         )
