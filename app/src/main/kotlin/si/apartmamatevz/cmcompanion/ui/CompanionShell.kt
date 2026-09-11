@@ -515,6 +515,13 @@ private fun AvailabilityQueryDialog(connection: InstallationConnection?, onDismi
         dismissButton = {
             androidx.compose.material3.TextButton(onClick = onDismiss) { Text("Close") }
         },
+        // Real user report (2026-09-11): a tap outside the dialog (e.g.
+        // glancing at a Today card behind it) closed it by default and
+        // threw away the just-checked date range + results - annoying
+        // when comparing several periods in one sitting. Only the
+        // explicit "Close" button (and back press, left at its default)
+        // should end the session now.
+        properties = androidx.compose.ui.window.DialogProperties(dismissOnClickOutside = false),
     )
 }
 
