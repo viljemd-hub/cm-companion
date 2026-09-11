@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
@@ -443,43 +444,45 @@ private fun AvailabilityQueryDialog(connection: InstallationConnection?, onDismi
                         val calendarUrl = "$siteRoot/admin/admin_calendar.php" +
                             "?unit=${Uri.encode(r.unit)}" +
                             "&focus_from=${queriedFrom}&focus_to=${queriedTo}"
-                        Text(
-                            "Open ${r.unit} in admin calendar →",
-                            color = CmColors.Accent,
-                            style = MaterialTheme.typography.bodySmall,
-                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
+                        // Two side-by-side buttons, not stacked text links
+                        // (2026-09-11 user feedback) - same two deep links
+                        // as before, just a clearer, more tappable pair.
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier
-                                .padding(start = 12.dp, top = 2.dp)
-                                .clickable {
+                                .fillMaxWidth()
+                                .padding(top = 6.dp),
+                        ) {
+                            androidx.compose.material3.OutlinedButton(
+                                onClick = {
                                     runCatching {
                                         androidx.browser.customtabs.CustomTabsIntent.Builder()
                                             .build()
                                             .launchUrl(resultsContext, Uri.parse(calendarUrl))
                                     }
                                 },
-                        )
-                        // Same deep link, plus quick_reserve=1 (2026-09-11 server-side
-                        // addition to admin_calendar.js) - the range is already known
-                        // free from this very query, so the web page can go straight to
-                        // its own existing hard/soft admin-reserve prompt instead of
-                        // just highlighting the dates. No reservation logic here or on
-                        // the server duplicates what admin_reserve.php/admin_reserve_soft.php
-                        // already do - this is only a deep-link parameter.
-                        Text(
-                            "Book ${r.unit} for this period →",
-                            color = CmColors.Accent,
-                            style = MaterialTheme.typography.bodySmall,
-                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
-                            modifier = Modifier
-                                .padding(start = 12.dp, top = 2.dp)
-                                .clickable {
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Open calendar", style = MaterialTheme.typography.labelMedium) }
+                            // Same deep link, plus quick_reserve=1 (2026-09-11
+                            // server-side addition to admin_calendar.js) - the
+                            // range is already known free from this very query,
+                            // so the web page can go straight to its own
+                            // existing hard/soft admin-reserve prompt instead
+                            // of just highlighting the dates. No reservation
+                            // logic here or on the server duplicates what
+                            // admin_reserve.php/admin_reserve_soft.php already
+                            // do - this is only a deep-link parameter.
+                            Button(
+                                onClick = {
                                     runCatching {
                                         androidx.browser.customtabs.CustomTabsIntent.Builder()
                                             .build()
                                             .launchUrl(resultsContext, Uri.parse("$calendarUrl&quick_reserve=1"))
                                     }
                                 },
-                        )
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Book now", style = MaterialTheme.typography.labelMedium) }
+                        }
                     }
                 }
             }
@@ -613,6 +616,16 @@ private fun CmLogoBadge(
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                )
+                // Real user mixup (2026-09-11): tested against a stale
+                // installed APK without realizing a newer one existed,
+                // wasted a debugging round on a "bug" that was just an
+                // out-of-date build - a visible version number is the
+                // fix, cheap enough not to need its own settings screen.
+                Text(
+                    "v${si.apartmamatevz.cmcompanion.BuildConfig.VERSION_NAME}",
+                    color = CmColors.TextFaint,
+                    style = MaterialTheme.typography.labelSmall,
                 )
                 if (showPlusBadge) {
                     Text(

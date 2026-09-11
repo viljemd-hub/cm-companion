@@ -35,7 +35,7 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = gitCommitCount
-        versionName = "0.3.3"
+        versionName = "0.3.4"
     }
 
     buildTypes {
@@ -46,6 +46,12 @@ android {
 
     buildFeatures {
         compose = true
+        // Re-enabled 2026-09-11 (was turned off when the dev-secrets
+        // BuildConfig fields were removed) - BuildConfig.VERSION_NAME is
+        // legitimate, auto-generated, holds no secret, and is needed for
+        // the app-bar version label added this session (a real "tested
+        // against a stale APK without realizing it" mixup prompted this).
+        buildConfig = true
     }
 
     composeOptions {
