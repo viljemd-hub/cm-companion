@@ -70,6 +70,13 @@ fun InquiriesScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        if (viewModel.actionError != null) {
+            Text(
+                "Action failed: ${viewModel.actionError}",
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+
         when {
             viewModel.isLoading && viewModel.inquiries.isEmpty() -> CircularProgressIndicator()
             viewModel.errorMessage != null -> Text("Could not load inquiries: ${viewModel.errorMessage}")

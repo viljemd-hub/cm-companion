@@ -64,5 +64,30 @@ class BridgeClient(private val connection: InstallationConnection) {
     }
 }
 
+/**
+ * 2026-09-11: the server's own error bodies are useful ("range_not_free",
+ * "status_not_soft_hold", etc.) but used to be thrown away entirely - the
+ * message was always the generic "Bridge request failed: HTTP $code",
+ * with the real reason sitting unread in [body]. Every screen's catch
+ * block just does `e.message ?: ...`, so that generic string is what
+ * users actually saw for every non-2xx response, real accept/reject
+ * conflicts included. Parse the JSON body's "error" field into the
+ * message here once, instead of asking every call site to remember to.
+ */
 class BridgeException(val httpStatus: Int, val body: String) :
-    Exception("Bridge request failed: HTTP $httpStatus")
+    Exception(buildMessage(httpStatus, body)) {
+    companion object {
+        private fun buildMessage(httpStatus: Int, body: String): String {
+            val serverError = try {
+                JSONObject(body).optString("error").takeIf { it.isNotBlank() }
+            } catch (e: Exception) {
+                null
+            }
+            return if (serverError != null) {
+                "$serverError (HTTP $httpStatus)"
+            } else {
+                "Bridge request failed: HTTP $httpStatus"
+            }
+        }
+    }
+}

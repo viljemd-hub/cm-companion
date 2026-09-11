@@ -21,6 +21,15 @@ class InquiriesViewModel(private val seenStore: SeenInquiriesStore) : ViewModel(
         private set
     var errorMessage by mutableStateOf<String?>(null)
         private set
+    // Separate from errorMessage (2026-09-11 real bug): accept() used to
+    // write its failure into errorMessage too, and the screen's "Could not
+    // load inquiries: ..." text replaces the ENTIRE list whenever
+    // errorMessage is non-null - so a real, expected accept rejection
+    // (e.g. an overlapping second reservation getting range_not_free) made
+    // the whole inquiries list vanish behind a misleading "load" error.
+    // This is shown as a banner above the list instead, see InquiriesScreen.
+    var actionError by mutableStateOf<String?>(null)
+        private set
     var inquiries by mutableStateOf<List<Inquiry>>(emptyList())
         private set
     var expandedId by mutableStateOf<String?>(null)
@@ -86,7 +95,7 @@ class InquiriesViewModel(private val seenStore: SeenInquiriesStore) : ViewModel(
      */
     fun accept(connection: InstallationConnection, inquiryId: String, onDone: () -> Unit) {
         acceptingId = inquiryId
-        errorMessage = null
+        actionError = null
         viewModelScope.launch {
             try {
                 val body = JSONObject().apply {
@@ -101,10 +110,10 @@ class InquiriesViewModel(private val seenStore: SeenInquiriesStore) : ViewModel(
                     seenStore.markSeen(inquiryId)
                     onDone()
                 } else {
-                    errorMessage = result.optString("error", "accept_failed")
+                    actionError = result.optString("error", "accept_failed")
                 }
             } catch (e: Exception) {
-                errorMessage = e.message ?: e.javaClass.simpleName
+                actionError = e.message ?: e.javaClass.simpleName
             } finally {
                 acceptingId = null
             }
