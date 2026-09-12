@@ -67,12 +67,12 @@ Built and live-tested against real CM installations:
 - Server-side `dashboard.today`, `dashboard.alerts`, `dashboard.inquiries`, and `action.inquiry_respond` Bridge scopes, on both CM Free and CM PRO
 - The four v0.1 tab screens (Today / Alerts / Inquiries / Connection), all live, not placeholders
 - Multi-installation docking tested for real: the same phone paired to a CM Free install and a CM PRO install at once
+- Plus-tier "Availability for a period" query, with a "Book for this period" follow-up that deep-links straight into the CM admin calendar's existing hard/soft reservation prompt (`quick_reserve=1`) - no reservation logic duplicated here, the web page does all of it
+- App launcher icon, using the existing CM house logo (not a separate mark)
 
 Not yet built:
 
-- Plus-tier availability query (cross-installation sweep) — architected for, not implemented
 - Explicit pairing test against a CM Plus installation (only Free and PRO have been paired so far)
-- App launcher icon (deliberately deferred until Free/Plus/PRO all reach parity)
 - Play Store listing / Play App Signing enrollment
 
 The server-side plan for the Bridge scopes above lives in `CM_Mobile_Companion_Plan_v0.1.md` in the main CM PRO working repo — this app is built against that plan, not duplicating it.
