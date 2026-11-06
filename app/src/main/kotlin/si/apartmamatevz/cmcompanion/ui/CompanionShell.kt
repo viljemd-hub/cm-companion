@@ -112,11 +112,21 @@ private fun defaultContinueUrl(connection: InstallationConnection): String {
     return "$siteRoot/admin/admin_calendar.php"
 }
 
-enum class CompanionTab(val label: String) {
+/**
+ * RESERVATIONS (2026-11-06) is reachable only from the version/tier-badge
+ * dropdown menu (see CmLogoBadge's "Reservations" item), not the bottom
+ * bar - "enostavno in pregledno" stays the rule for the four daily-use
+ * tabs, the dropdown is where secondary destinations belong as the
+ * feature set grows. [inBottomNav] is what the NavigationBar below
+ * actually iterates; the tab itself still exists as a normal state value
+ * either way (so the content Column's `when (tab)` doesn't need special-
+ * casing it).
+ */
+enum class CompanionTab(val label: String, val inBottomNav: Boolean = true) {
     TODAY("Today"),
     ALERTS("Alerts"),
     INQUIRIES("Inquiries"),
-    RESERVATIONS("Reservations"),
+    RESERVATIONS("Reservations", inBottomNav = false),
     CONNECTION("Connection"),
 }
 
@@ -201,6 +211,7 @@ fun CompanionShell(dockViewModel: DockViewModel) {
     val reservationsViewModel: ReservationsViewModel = viewModel()
     var pendingInquiryId by remember { mutableStateOf<String?>(null) }
     var showPlusMenu by remember { mutableStateOf(false) }
+    var showModuleMenu by remember { mutableStateOf(false) }
     var showAvailabilityQuery by remember { mutableStateOf(false) }
 
     // "free" until Today's first successful load - matches
@@ -223,6 +234,7 @@ fun CompanionShell(dockViewModel: DockViewModel) {
                     CmLogoBadge(
                         tier = tier,
                         onOpenAdmin = {
+                            showModuleMenu = false
                             val connection = selected ?: return@CmLogoBadge
                             val url = connection.continueUrl?.ifBlank { null } ?: defaultContinueUrl(connection)
                             // Custom Tabs, not a plain ACTION_VIEW intent
@@ -247,13 +259,20 @@ fun CompanionShell(dockViewModel: DockViewModel) {
                             showPlusMenu = false
                             showAvailabilityQuery = true
                         },
+                        onOpenReservations = {
+                            showPlusMenu = false
+                            tab = CompanionTab.RESERVATIONS
+                        },
+                        onOpenModuleMenu = { showModuleMenu = true },
+                        moduleMenuExpanded = showModuleMenu,
+                        onDismissModuleMenu = { showModuleMenu = false },
                     )
                 },
             )
         },
         bottomBar = {
             NavigationBar {
-                CompanionTab.entries.forEach { candidate ->
+                CompanionTab.entries.filter { it.inBottomNav }.forEach { candidate ->
                     NavigationBarItem(
                         selected = tab == candidate,
                         onClick = { tab = candidate },
@@ -604,6 +623,10 @@ private fun CmLogoBadge(
     plusMenuExpanded: Boolean,
     onDismissPlusMenu: () -> Unit,
     onAvailabilityQuery: () -> Unit,
+    onOpenReservations: () -> Unit,
+    onOpenModuleMenu: () -> Unit,
+    moduleMenuExpanded: Boolean,
+    onDismissModuleMenu: () -> Unit,
 ) {
     // Only Plus/PRO get the tier badge + menu - a Free installation has
     // no Plus-only actions to offer, so nothing renders rather than a
@@ -661,27 +684,50 @@ private fun CmLogoBadge(
                     text = { Text("Availability for a period") },
                     onClick = onAvailabilityQuery,
                 )
+                // Reservations (2026-11-06) lives here, not as its own
+                // bottom-nav tab - "enostavno in pregledno" (simple and
+                // clear) stays the rule for the bar itself (Today/Alerts/
+                // Inquiries/Connection only); this menu is where secondary,
+                // less-than-daily actions belong as the feature set grows.
+                DropdownMenuItem(
+                    text = { Text("Reservations") },
+                    onClick = onOpenReservations,
+                )
             }
         }
-        androidx.compose.foundation.layout.Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                // White backing plate, same reasoning as the launcher
-                // icon's adaptive background - the logo's black
-                // outline/white fill was made for a light background,
-                // and read as "peeking through" the dark app bar
-                // without one.
-                .background(androidx.compose.ui.graphics.Color.White)
-                .combinedClickable(onClick = onOpenAdmin, onLongClick = onOpenSettings),
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.cm_logo),
-                contentDescription = "CM Companion",
-                tint = androidx.compose.ui.graphics.Color.Unspecified,
+        Box {
+            androidx.compose.foundation.layout.Box(
                 modifier = Modifier
-                    .padding(6.dp)
-                    .size(28.dp),
-            )
+                    .clip(RoundedCornerShape(10.dp))
+                    // White backing plate, same reasoning as the launcher
+                    // icon's adaptive background - the logo's black
+                    // outline/white fill was made for a light background,
+                    // and read as "peeking through" the dark app bar
+                    // without one.
+                    .background(androidx.compose.ui.graphics.Color.White)
+                    // 2026-11-06: was a direct tap->onOpenAdmin shortcut;
+                    // now opens a menu instead, so module shortcuts beyond
+                    // just the calendar (Guest Chat, Guestbook/NFC, etc. -
+                    // still being decided) have somewhere to live without
+                    // a second redesign later. Long-press still goes
+                    // straight to the continue-URL settings dialog.
+                    .combinedClickable(onClick = onOpenModuleMenu, onLongClick = onOpenSettings),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.cm_logo),
+                    contentDescription = "CM Companion",
+                    tint = androidx.compose.ui.graphics.Color.Unspecified,
+                    modifier = Modifier
+                        .padding(6.dp)
+                        .size(28.dp),
+                )
+            }
+            DropdownMenu(expanded = moduleMenuExpanded, onDismissRequest = onDismissModuleMenu) {
+                DropdownMenuItem(
+                    text = { Text("Calendar") },
+                    onClick = onOpenAdmin,
+                )
+            }
         }
     }
 }
