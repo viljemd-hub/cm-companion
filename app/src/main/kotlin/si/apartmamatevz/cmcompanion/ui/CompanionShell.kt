@@ -16,6 +16,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
+// Aliased (2026-11-06): the unqualified name "List" collides with
+// kotlin.collections.List, already used elsewhere in this same file
+// (connections: List<InstallationConnection>, etc.) - ambiguous-reference
+// compile error without the alias. AutoMirrored variant per the plain
+// Icons.Filled.List deprecation warning (flips direction in RTL layouts).
+import androidx.compose.material.icons.automirrored.filled.List as ListIcon
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.foundation.layout.Arrangement
@@ -66,6 +72,8 @@ import si.apartmamatevz.cmcompanion.ui.dock.DockScreen
 import si.apartmamatevz.cmcompanion.ui.dock.DockViewModel
 import si.apartmamatevz.cmcompanion.ui.inquiries.InquiriesScreen
 import si.apartmamatevz.cmcompanion.ui.inquiries.InquiriesViewModel
+import si.apartmamatevz.cmcompanion.ui.reservations.ReservationsScreen
+import si.apartmamatevz.cmcompanion.ui.reservations.ReservationsViewModel
 import si.apartmamatevz.cmcompanion.ui.theme.CmColors
 import si.apartmamatevz.cmcompanion.ui.today.TodayScreen
 import si.apartmamatevz.cmcompanion.ui.today.TodayViewModel
@@ -108,16 +116,19 @@ enum class CompanionTab(val label: String) {
     TODAY("Today"),
     ALERTS("Alerts"),
     INQUIRIES("Inquiries"),
+    RESERVATIONS("Reservations"),
     CONNECTION("Connection"),
 }
 
-// Home/Email/Notifications/Settings are in material-icons-core; Link/Mail
-// (originally tried here) are extended-only and failed the build - stick
-// to the small core icon set rather than pulling in ~2000 extra icons.
+// Home/Email/Notifications/Settings/List are in material-icons-core;
+// Link/Mail (originally tried here) are extended-only and failed the
+// build - stick to the small core icon set rather than pulling in ~2000
+// extra icons.
 private fun CompanionTab.icon() = when (this) {
     CompanionTab.TODAY -> Icons.Filled.Home
     CompanionTab.ALERTS -> Icons.Filled.Notifications
     CompanionTab.INQUIRIES -> Icons.Filled.Email
+    CompanionTab.RESERVATIONS -> Icons.AutoMirrored.Filled.ListIcon
     CompanionTab.CONNECTION -> Icons.Filled.Settings
 }
 
@@ -187,6 +198,7 @@ fun CompanionShell(dockViewModel: DockViewModel) {
     val todayViewModel: TodayViewModel = viewModel(factory = seenStoreFactory)
     val inquiriesViewModel: InquiriesViewModel = viewModel(factory = seenStoreFactory)
     val alertsViewModel: AlertsViewModel = viewModel()
+    val reservationsViewModel: ReservationsViewModel = viewModel()
     var pendingInquiryId by remember { mutableStateOf<String?>(null) }
     var showPlusMenu by remember { mutableStateOf(false) }
     var showAvailabilityQuery by remember { mutableStateOf(false) }
@@ -271,6 +283,10 @@ fun CompanionShell(dockViewModel: DockViewModel) {
                         tab = CompanionTab.TODAY
                         todayViewModel.load(selected!!)
                     },
+                )
+                CompanionTab.RESERVATIONS -> ReservationsScreen(
+                    connection = selected!!,
+                    viewModel = reservationsViewModel,
                 )
                 CompanionTab.CONNECTION -> ConnectionScreen(
                     connections = connections,
